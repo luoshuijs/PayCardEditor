@@ -20,7 +20,8 @@
             android:elevation="0dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
-            android:titleTextColor="@color/text_primary" />
+            android:titleTextColor="@color/black"
+            app:titleTextColor="@color/black" />
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/main_fragment_container"
