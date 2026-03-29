@@ -66,6 +66,18 @@ internal class RemoteCardSnapshotStore(
         }
     }
 
+    fun updateTroubleshootState(debugStatus: String, hookMethods: String) {
+        safelySync("troubleshoot") {
+            callProvider(
+                HookEnvironment.METHOD_UPDATE_TROUBLESHOOT_STATE,
+                Bundle().apply {
+                    putString(HookEnvironment.EXTRA_DEBUG_STATUS, debugStatus)
+                    putString(HookEnvironment.EXTRA_HOOK_METHODS, hookMethods)
+                }
+            )
+        }
+    }
+
     private inline fun safelySync(source: String, block: () -> Unit) {
         try {
             block()

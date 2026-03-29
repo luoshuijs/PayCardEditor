@@ -20,6 +20,7 @@
     <string name="home_action_activation">激活信息</string>
     <string name="home_action_sync">同步快照</string>
     <string name="home_action_open_mipay">打开 MiPay</string>
+    <string name="home_action_troubleshoot">故障排查</string>
     <string name="home_hint_label">建议验证顺序</string>
     <string name="home_hint_steps">1. 在框架里启用模块并勾选 com.miui.tsmclient 作用域。
 2. 打开一次小米钱包卡片列表页或详情页，让 Hook 拿到 CardInfo / CardInfoManager 数据。
@@ -34,6 +35,12 @@
     <string name="copy_card_info_done">卡面信息已复制</string>
     <string name="open_mipay_not_supported">当前设备没有可用的 MiPay 入口</string>
     <string name="open_mipay_failed">打开 MiPay 失败，请稍后重试</string>
+    <string name="troubleshoot_title">故障排查</string>
+    <string name="troubleshoot_debug_title">调试信息</string>
+    <string name="troubleshoot_hook_list_title">主进程 Hook 方法列表</string>
+    <string name="troubleshoot_updated_at">最近上报: %1$s</string>
+    <string name="troubleshoot_copy_action">复制</string>
+    <string name="troubleshoot_copy_done">故障排查信息已复制</string>
 
     <string name="studio_section_eyebrow">Card Studio</string>
     <string name="studio_add_asset">添加卡面</string>

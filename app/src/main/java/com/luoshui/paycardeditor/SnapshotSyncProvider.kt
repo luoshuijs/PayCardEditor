@@ -33,6 +33,7 @@ class SnapshotSyncProvider : ContentProvider() {
         when (method) {
             HookEnvironment.METHOD_UPSERT_SNAPSHOTS -> upsertSnapshots(prefs, extras)
             HookEnvironment.METHOD_RECORD_ERROR -> recordError(prefs, extras)
+            HookEnvironment.METHOD_UPDATE_TROUBLESHOOT_STATE -> updateTroubleshootState(prefs, extras)
             HookEnvironment.METHOD_GET_BANK_RULES -> return Bundle().apply {
                 putString(HookEnvironment.EXTRA_RULES_JSON, loadBankRulesJson())
             }
@@ -125,6 +126,21 @@ class SnapshotSyncProvider : ContentProvider() {
                     HookEnvironment.PREF_KEY_LAST_ERROR,
                     extras?.getString(HookEnvironment.EXTRA_ERROR).orEmpty()
                 )
+        }
+    }
+
+    private fun updateTroubleshootState(prefs: android.content.SharedPreferences, extras: Bundle?) {
+        prefs.edit {
+            putString(
+                HookEnvironment.PREF_KEY_DEBUG_STATUS,
+                extras?.getString(HookEnvironment.EXTRA_DEBUG_STATUS).orEmpty()
+            ).putString(
+                HookEnvironment.PREF_KEY_HOOK_METHODS,
+                extras?.getString(HookEnvironment.EXTRA_HOOK_METHODS).orEmpty()
+            ).putLong(
+                HookEnvironment.PREF_KEY_TROUBLESHOOT_UPDATED_AT,
+                System.currentTimeMillis()
+            )
         }
     }
 

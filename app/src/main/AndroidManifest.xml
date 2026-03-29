@@ -25,6 +25,10 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".TroubleshootActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PayCardEditor" />
+        <activity
             android:name="com.yalantis.ucrop.UCropActivity"
             android:exported="false"
             android:screenOrientation="portrait"

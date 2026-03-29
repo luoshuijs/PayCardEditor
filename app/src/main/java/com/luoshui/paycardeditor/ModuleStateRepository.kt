@@ -22,6 +22,21 @@ object ModuleStateRepository {
         return HomeState(moduleStatus = moduleStatus, cardState = cardState)
     }
 
+    fun loadTroubleshootState(): TroubleshootState {
+        val context = App.appContext
+        val prefs = context?.getSharedPreferences(HookEnvironment.LOCAL_STATE_PREFS_NAME, Context.MODE_PRIVATE)
+        val debugInfo = prefs?.getString(HookEnvironment.PREF_KEY_DEBUG_STATUS, "").orEmpty()
+        val hookMethods = prefs?.getString(HookEnvironment.PREF_KEY_HOOK_METHODS, "").orEmpty()
+        val updatedAt = prefs?.getLong(HookEnvironment.PREF_KEY_TROUBLESHOOT_UPDATED_AT, 0L) ?: 0L
+        return TroubleshootState(
+            debugInfo = debugInfo.ifBlank { buildFallbackDebugInfo() },
+            hookMethods = hookMethods.ifBlank {
+                "尚未收到主进程 Hook 方法列表。\n先打开一次小米钱包卡片页，让 Hook 完成初始化后再回来刷新。"
+            },
+            updatedAt = updatedAt,
+        )
+    }
+
     private fun loadModuleStatus(): ModuleStatusState {
         val service = App.xposedService ?: return ModuleStatusState(
             level = ModuleStatusLevel.WAITING,
@@ -58,6 +73,18 @@ object ModuleStateRepository {
             lastSource = prefs.getString(HookEnvironment.PREF_KEY_LAST_SOURCE, "").orEmpty(),
             warning = error,
         )
+    }
+
+    private fun buildFallbackDebugInfo(): String {
+        val service = App.xposedService
+        return buildString {
+            append("尚未收到主进程调试信息。\n")
+            append("先打开一次小米钱包卡片页，让模块在 com.miui.tsmclient 主进程里完成初始化。")
+            if (service != null) {
+                append("\n\n当前应用侧框架信息\n")
+                append(readFrameworkLabel(service))
+            }
+        }
     }
 
     private fun readFrameworkLabel(service: XposedService): String = runCatching {

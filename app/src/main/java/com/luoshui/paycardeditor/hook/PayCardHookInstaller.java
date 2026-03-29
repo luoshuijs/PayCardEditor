@@ -1,5 +1,7 @@
 package com.luoshui.paycardeditor.hook;
 
+import android.os.Build;
+import android.os.Process;
 import android.content.Context;
 import android.os.Bundle;
 import android.net.Uri;
@@ -24,6 +26,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 
 import io.github.libxposed.api.XposedInterface.ExceptionMode;
@@ -47,6 +50,7 @@ final class PayCardHookInstaller {
     private final Map<String, CacheReplacementTarget> mProtectedSafeKeyMap = new HashMap<>();
     private volatile long mCacheReplacementMapLoadedAt = 0L;
     private volatile Map<String, CacheReplacementTarget> mCacheReplacementMap = Collections.emptyMap();
+    private final List<HookRecord> mInstalledHookRecords = new ArrayList<>();
 
     private volatile boolean mInstalled = false;
 
@@ -77,6 +81,7 @@ final class PayCardHookInstaller {
                 anyInstalled |= installHookGroup("Image cache hooks", () -> installImageHooks(dexKitTargets));
                 anyInstalled |= installHookGroup("Transit hooks", () -> installTransitHooks(cardInfoClass, dexKitTargets));
                 anyInstalled |= installHookGroup("Mifare hooks", () -> installMifareHooks(dexKitTargets));
+                publishTroubleshootState(apkPath, cardInfoClass, cardInfoManagerClass, cacheLauncherClass, dexKitTargets);
 
                 mInstalled = anyInstalled;
                 if (anyInstalled) {
@@ -116,6 +121,7 @@ final class PayCardHookInstaller {
                     });
                     return result;
                 });
+        recordInstalledHook("CardInfo.updateInfo", updateInfo);
 
     }
 
@@ -136,6 +142,7 @@ final class PayCardHookInstaller {
                     });
                     return chain.proceed();
                 });
+        recordInstalledHook("CardInfoManager.put(CardInfo)", putSingle);
 
         Method putList = findOverload(cardInfoManagerClass, "put", parameterTypes ->
                 parameterTypes.length == 1 && List.class.isAssignableFrom(parameterTypes[0]));
@@ -153,6 +160,7 @@ final class PayCardHookInstaller {
                     });
                     return chain.proceed();
                 });
+        recordInstalledHook("CardInfoManager.put(List)", putList);
 
         Method getAll = cardInfoManagerClass.getDeclaredMethod("getAll", cacheLauncherClass);
         prepareMethod(getAll, "CardInfoManager.getAll");
@@ -169,6 +177,7 @@ final class PayCardHookInstaller {
                     });
                     return result;
                 });
+        recordInstalledHook("CardInfoManager.getAll", getAll);
 
         Method getBankCards = cardInfoManagerClass.getDeclaredMethod("getBankCards", cacheLauncherClass);
         prepareMethod(getBankCards, "CardInfoManager.getBankCards");
@@ -185,6 +194,7 @@ final class PayCardHookInstaller {
                     });
                     return result;
                 });
+        recordInstalledHook("CardInfoManager.getBankCards", getBankCards);
 
         Method getIssuedTransCards = cardInfoManagerClass.getDeclaredMethod("getIssuedTransCards", cacheLauncherClass);
         prepareMethod(getIssuedTransCards, "CardInfoManager.getIssuedTransCards");
@@ -201,6 +211,7 @@ final class PayCardHookInstaller {
                     });
                     return result;
                 });
+        recordInstalledHook("CardInfoManager.getIssuedTransCards", getIssuedTransCards);
 
         Method getMifareCards = cardInfoManagerClass.getDeclaredMethod("getMifareCards", cacheLauncherClass);
         prepareMethod(getMifareCards, "CardInfoManager.getMifareCards");
@@ -217,6 +228,7 @@ final class PayCardHookInstaller {
                     });
                     return result;
                 });
+        recordInstalledHook("CardInfoManager.getMifareCards", getMifareCards);
     }
 
     private void installBankHooks(@NonNull DexKitHookTargets dexKitTargets) throws NoSuchMethodException {
@@ -232,6 +244,7 @@ final class PayCardHookInstaller {
                     runHookSideEffect("i6.e.O", () -> patchAndMergeCard(chain.getArg(0), "i6.e.O"));
                     return result;
                 });
+        recordInstalledHook("BankCardInfo.mergeVirtualCardInfo", mergeVirtualCardInfo);
 
         Method mergeQueryPanInfo = dexKitTargets.getBankQueryPanMerge();
         if (mergeQueryPanInfo == null) {
@@ -245,6 +258,7 @@ final class PayCardHookInstaller {
                     runHookSideEffect("i6.e.N", () -> patchAndMergeCard(chain.getArg(0), "i6.e.N"));
                     return result;
                 });
+        recordInstalledHook("BankCardInfo.mergeQueryPanInfo", mergeQueryPanInfo);
     }
 
     private void installTransitHooks(
@@ -262,6 +276,7 @@ final class PayCardHookInstaller {
                     runHookSideEffect("CardInfo.updateBackground", () -> patchAndMergeCard(chain.getThisObject(), "CardInfo.updateBackground"));
                     return result;
                 });
+        recordInstalledHook("CardInfo.updateBackground", updateBackground);
     }
 
     private void installImageHooks(@NonNull DexKitHookTargets dexKitTargets) {
@@ -287,6 +302,7 @@ final class PayCardHookInstaller {
                         }
                         return result;
                     });
+            recordInstalledHook("Md5FileNameGenerator.generate", generateToken);
         } catch (Throwable throwable) {
             mModule.log(Log.WARN, TAG, "Glide token hook install failed: " + Log.getStackTraceString(throwable));
         }
@@ -338,6 +354,7 @@ final class PayCardHookInstaller {
                     }
                     return chain.proceed();
                 });
+        recordInstalledHook("DiskLruCacheWrapper.get", getFromDiskCache);
 
         prepareMethod(putToDiskCache, "DiskLruCacheWrapper.put");
         mModule.hook(putToDiskCache)
@@ -356,6 +373,7 @@ final class PayCardHookInstaller {
                     }
                     return chain.proceed();
                 });
+        recordInstalledHook("DiskLruCacheWrapper.put", putToDiskCache);
     }
 
     private void installDiskCacheRemoveHook(@NonNull Class<?> diskCacheWrapperClass) {
@@ -381,6 +399,7 @@ final class PayCardHookInstaller {
                         }
                         return chain.proceed();
                     });
+            recordInstalledHook("DiskLruCache.remove", removeMethod);
         } catch (Throwable throwable) {
             mModule.log(Log.WARN, TAG, "DiskLruCache remove hook install failed: " + Log.getStackTraceString(throwable));
         }
@@ -400,6 +419,229 @@ final class PayCardHookInstaller {
                     runHookSideEffect("g6.c.o#result", () -> mergeUnknownPayload(result, "g6.c.o#result"));
                     return result;
                 });
+        recordInstalledHook("MifareModel.queryDoorCardInfo", mifareQuery);
+    }
+
+    private void recordInstalledHook(@NonNull String label, @NonNull Method method) {
+        synchronized (mInstalledHookRecords) {
+            mInstalledHookRecords.add(new HookRecord(label, method));
+        }
+    }
+
+    private void publishTroubleshootState(
+            @NonNull String apkPath,
+            @NonNull Class<?> cardInfoClass,
+            @NonNull Class<?> cardInfoManagerClass,
+            @NonNull Class<?> cacheLauncherClass,
+            @NonNull DexKitHookTargets dexKitTargets
+    ) {
+        try {
+            String debugStatus = buildDebugStatus(apkPath);
+            String hookMethods = buildHookMethodList(cardInfoClass, cardInfoManagerClass, cacheLauncherClass, dexKitTargets);
+            mSnapshotStore.updateTroubleshootState(debugStatus, hookMethods);
+        } catch (Throwable throwable) {
+            mModule.log(Log.WARN, TAG, "publish troubleshoot state failed: " + Log.getStackTraceString(throwable));
+        }
+    }
+
+    @NonNull
+    private String buildDebugStatus(@NonNull String apkPath) {
+        Context context = HookProcessContext.INSTANCE.resolve();
+        String dataDir = context != null && context.getDataDir() != null ? context.getDataDir().getAbsolutePath() : "null";
+        String moduleVersion = resolveModuleVersion(context);
+        StringBuilder builder = new StringBuilder();
+        builder.append("PID: ").append(Process.myPid())
+                .append(", UID: ").append(Process.myUid())
+                .append(", ISA: ").append(resolveIsaName())
+                .append('\n');
+        builder.append("Xposed API version: ").append(mModule.getApiVersion()).append('\n');
+        builder.append("module: ").append(apkPath).append('\n');
+        builder.append("ctx.dataDir: ").append(dataDir).append('\n');
+        builder.append(mModule.getClass().getName())
+                .append(' ')
+                .append(moduleVersion)
+                .append('\n');
+        builder.append("XposedBridge: ").append(resolveXposedRuntimeClassName()).append('\n');
+        builder.append(mModule.getFrameworkName())
+                .append(' ')
+                .append(mModule.getFrameworkVersion())
+                .append(" (")
+                .append(mModule.getFrameworkVersionCode())
+                .append(")\n");
+        builder.append("Hook counter: ").append(getInstalledHookCount());
+        return builder.toString();
+    }
+
+    @NonNull
+    private String buildHookMethodList(
+            @NonNull Class<?> cardInfoClass,
+            @NonNull Class<?> cardInfoManagerClass,
+            @NonNull Class<?> cacheLauncherClass,
+            @NonNull DexKitHookTargets dexKitTargets
+    ) throws NoSuchMethodException {
+        List<HookCandidate> candidates = new ArrayList<>();
+        candidates.add(new HookCandidate("CardInfo.updateInfo", cardInfoClass, cardInfoClass.getDeclaredMethod("updateInfo", cardInfoClass)));
+        candidates.add(new HookCandidate("CardInfoManager.put(CardInfo)", cardInfoManagerClass, findOverload(cardInfoManagerClass, "put", parameterTypes ->
+                parameterTypes.length == 1 && cardInfoClass.getName().equals(parameterTypes[0].getName()))));
+        candidates.add(new HookCandidate("CardInfoManager.put(List)", cardInfoManagerClass, findOverload(cardInfoManagerClass, "put", parameterTypes ->
+                parameterTypes.length == 1 && List.class.isAssignableFrom(parameterTypes[0]))));
+        candidates.add(new HookCandidate("CardInfoManager.getAll", cardInfoManagerClass, cardInfoManagerClass.getDeclaredMethod("getAll", cacheLauncherClass)));
+        candidates.add(new HookCandidate("CardInfoManager.getBankCards", cardInfoManagerClass, cardInfoManagerClass.getDeclaredMethod("getBankCards", cacheLauncherClass)));
+        candidates.add(new HookCandidate("CardInfoManager.getIssuedTransCards", cardInfoManagerClass, cardInfoManagerClass.getDeclaredMethod("getIssuedTransCards", cacheLauncherClass)));
+        candidates.add(new HookCandidate("CardInfoManager.getMifareCards", cardInfoManagerClass, cardInfoManagerClass.getDeclaredMethod("getMifareCards", cacheLauncherClass)));
+        candidates.add(new HookCandidate("BankCardInfo.mergeVirtualCardInfo", resolveDeclaringClass(dexKitTargets.getBankVirtualCardMerge()), dexKitTargets.getBankVirtualCardMerge()));
+        candidates.add(new HookCandidate("BankCardInfo.mergeQueryPanInfo", resolveDeclaringClass(dexKitTargets.getBankQueryPanMerge()), dexKitTargets.getBankQueryPanMerge()));
+        candidates.add(new HookCandidate("CardInfo.updateBackground", resolveDeclaringClass(dexKitTargets.getTransitUpdateBackground(), cardInfoClass), dexKitTargets.getTransitUpdateBackground()));
+        candidates.add(new HookCandidate("Md5FileNameGenerator.generate", resolveDeclaringClass(dexKitTargets.getGlideTokenGenerate()), dexKitTargets.getGlideTokenGenerate()));
+        candidates.add(new HookCandidate("DiskLruCacheWrapper.get", resolveDeclaringClass(dexKitTargets.getGlideDiskCacheGet(), dexKitTargets.getGlideDiskCacheWrapperClass()), dexKitTargets.getGlideDiskCacheGet()));
+        candidates.add(new HookCandidate("DiskLruCacheWrapper.put", resolveDeclaringClass(dexKitTargets.getGlideDiskCachePut(), dexKitTargets.getGlideDiskCacheWrapperClass()), dexKitTargets.getGlideDiskCachePut()));
+        Method diskRemoveMethod = null;
+        Class<?> diskCacheWrapperClass = dexKitTargets.getGlideDiskCacheWrapperClass();
+        if (diskCacheWrapperClass != null) {
+            Class<?> diskLruCacheClass = resolveDiskLruCacheClass(diskCacheWrapperClass);
+            if (diskLruCacheClass != null) {
+                diskRemoveMethod = findMethodBySignature(diskLruCacheClass, Boolean.TYPE, String.class);
+            }
+        }
+        candidates.add(new HookCandidate("DiskLruCache.remove", resolveDeclaringClass(diskRemoveMethod), diskRemoveMethod));
+        candidates.add(new HookCandidate("MifareModel.queryDoorCardInfo", resolveDeclaringClass(dexKitTargets.getMifareQuery()), dexKitTargets.getMifareQuery()));
+        StringBuilder builder = new StringBuilder();
+        for (int index = 0; index < candidates.size(); index++) {
+            HookCandidate candidate = candidates.get(index);
+            if (index > 0) {
+                builder.append("\n");
+            }
+            builder.append('[')
+                    .append(index + 1)
+                    .append(']')
+                    .append(candidate.label)
+                    .append('\n')
+                    .append(candidate.ownerClass != null ? candidate.ownerClass.getName() : "(void*)0")
+                    .append('\n')
+                    .append("= ")
+                    .append(candidate.method != null ? buildMethodDescriptor(candidate.method) : "(void*)0");
+        }
+        return builder.toString();
+    }
+
+    @NonNull
+    private String resolveIsaName() {
+        String rawAbi = null;
+        if (Build.SUPPORTED_ABIS.length > 0) {
+            rawAbi = Build.SUPPORTED_ABIS[0];
+        }
+        if (rawAbi == null || rawAbi.isEmpty()) {
+            rawAbi = System.getProperty("os.arch", "unknown");
+        }
+        String abi = rawAbi.toLowerCase(Locale.ROOT);
+        if (abi.contains("arm64") || abi.contains("aarch64")) {
+            return "arm64";
+        }
+        if (abi.contains("armeabi") || abi.contains("arm")) {
+            return "arm";
+        }
+        if (abi.contains("x86_64")) {
+            return "x86_64";
+        }
+        if (abi.contains("x86")) {
+            return "x86";
+        }
+        return rawAbi;
+    }
+
+    @NonNull
+    private String resolveXposedRuntimeClassName() {
+        String[] candidates = new String[]{
+                "de.robv.android.xposed.XposedBridge",
+                "io.github.libxposed.api.XposedInterface"
+        };
+        for (String candidate : candidates) {
+            try {
+                Class<?> runtimeClass = Class.forName(candidate, false, mModule.getClass().getClassLoader());
+                return runtimeClass.getName();
+            } catch (Throwable ignored) {
+                // Try next candidate.
+            }
+        }
+        return "null";
+    }
+
+    private int getInstalledHookCount() {
+        synchronized (mInstalledHookRecords) {
+            return mInstalledHookRecords.size();
+        }
+    }
+
+    @NonNull
+    private String resolveModuleVersion(Context context) {
+        if (context == null) {
+            return "unknown (0)";
+        }
+        try {
+            var packageInfo = context.getPackageManager().getPackageInfo(HookEnvironment.MODULE_PACKAGE, 0);
+            return packageInfo.versionName + " (" + packageInfo.getLongVersionCode() + ')';
+        } catch (Throwable ignored) {
+            return "unknown (0)";
+        }
+    }
+
+    private Class<?> resolveDeclaringClass(Method method) {
+        return method != null ? method.getDeclaringClass() : null;
+    }
+
+    private Class<?> resolveDeclaringClass(Method method, Class<?> fallbackClass) {
+        return method != null ? method.getDeclaringClass() : fallbackClass;
+    }
+
+    @NonNull
+    private String buildMethodDescriptor(@NonNull Method method) {
+        StringBuilder builder = new StringBuilder();
+        builder.append('L')
+                .append(method.getDeclaringClass().getName().replace('.', '/'))
+                .append(";->")
+                .append(method.getName())
+                .append('(');
+        for (Class<?> parameterType : method.getParameterTypes()) {
+            builder.append(toDexType(parameterType));
+        }
+        builder.append(')')
+                .append(toDexType(method.getReturnType()));
+        return builder.toString();
+    }
+
+    @NonNull
+    private String toDexType(@NonNull Class<?> type) {
+        if (type.isArray()) {
+            return type.getName().replace('.', '/');
+        }
+        if (Void.TYPE.equals(type)) {
+            return "V";
+        }
+        if (Boolean.TYPE.equals(type)) {
+            return "Z";
+        }
+        if (Byte.TYPE.equals(type)) {
+            return "B";
+        }
+        if (Character.TYPE.equals(type)) {
+            return "C";
+        }
+        if (Short.TYPE.equals(type)) {
+            return "S";
+        }
+        if (Integer.TYPE.equals(type)) {
+            return "I";
+        }
+        if (Long.TYPE.equals(type)) {
+            return "J";
+        }
+        if (Float.TYPE.equals(type)) {
+            return "F";
+        }
+        if (Double.TYPE.equals(type)) {
+            return "D";
+        }
+        return "L" + type.getName().replace('.', '/') + ";";
     }
 
     private void prepareMethod(@NonNull Method method, @NonNull String label) {
@@ -1204,6 +1446,28 @@ final class PayCardHookInstaller {
             this.remoteUrl = remoteUrl;
             this.assetId = assetId;
             this.assetUri = assetUri;
+        }
+    }
+
+    private static final class HookRecord {
+        final String label;
+        final Method method;
+
+        HookRecord(@NonNull String label, @NonNull Method method) {
+            this.label = label;
+            this.method = method;
+        }
+    }
+
+    private static final class HookCandidate {
+        final String label;
+        final Class<?> ownerClass;
+        final Method method;
+
+        HookCandidate(@NonNull String label, Class<?> ownerClass, Method method) {
+            this.label = label;
+            this.ownerClass = ownerClass;
+            this.method = method;
         }
     }
 

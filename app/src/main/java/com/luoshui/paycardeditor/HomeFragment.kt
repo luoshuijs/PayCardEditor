@@ -1,6 +1,7 @@
 package com.luoshui.paycardeditor
 
 import android.content.res.ColorStateList
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -30,6 +31,9 @@ class HomeFragment : Fragment(), App.ServiceStateListener {
             (activity as? MainActivity)?.showCardSnapshotDialog()
         }
         binding.buttonOpenMipay.setOnClickListener { MiPayNavigator.open(requireContext()) }
+        binding.buttonTroubleshoot.setOnClickListener {
+            startActivity(Intent(requireContext(), TroubleshootActivity::class.java))
+        }
         renderState()
     }
 
