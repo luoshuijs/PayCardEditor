@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.luoshui.paycardeditor.databinding.FragmentHomeBinding
 import io.github.libxposed.service.XposedService
 
@@ -25,7 +24,6 @@ class HomeFragment : Fragment(), App.ServiceStateListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.buttonActivationInfo.setOnClickListener { showActivationDialog() }
         binding.buttonSyncSnapshot.setOnClickListener {
             renderState()
             (activity as? MainActivity)?.showCardSnapshotDialog()
@@ -87,15 +85,6 @@ class HomeFragment : Fragment(), App.ServiceStateListener {
         binding.viewActivationIndicator.backgroundTintList = ColorStateList.valueOf(color(indicator))
         binding.cardActivation.setCardBackgroundColor(color(container))
         binding.cardActivation.strokeColor = color(stroke)
-    }
-
-    private fun showActivationDialog() {
-        val status = ModuleStateRepository.loadHomeState().moduleStatus
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.home_status_label)
-            .setMessage("${status.title}\n\n${status.detail}")
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
     }
 
     private fun color(colorRes: Int): Int = ContextCompat.getColor(requireContext(), colorRes)

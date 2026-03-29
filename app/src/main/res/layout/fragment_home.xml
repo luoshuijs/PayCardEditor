@@ -151,19 +151,10 @@
             android:orientation="vertical">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_activation_info"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/home_action_activation"
-                app:icon="@android:drawable/ic_menu_info_details" />
-
-            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_sync_snapshot"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
                 android:text="@string/home_action_sync"
                 app:icon="@android:drawable/ic_popup_sync" />
 

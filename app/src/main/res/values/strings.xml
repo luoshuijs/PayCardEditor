@@ -17,7 +17,6 @@
     <string name="home_status_label">激活检测</string>
     <string name="home_snapshot_label">同步快照</string>
     <string name="home_preview_label">卡面预览</string>
-    <string name="home_action_activation">激活信息</string>
     <string name="home_action_sync">同步快照</string>
     <string name="home_action_open_mipay">打开 MiPay</string>
     <string name="home_action_troubleshoot">故障排查</string>
