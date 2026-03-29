@@ -1,0 +1,94 @@
+package com.luoshui.paycardeditor
+
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.os.Bundle
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.commitNow
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import com.luoshui.paycardeditor.databinding.ActivityMainBinding
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbar)
+
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navigation_home -> {
+                    showRootFragment(HomeFragment.TAG, HomeFragment())
+                    true
+                }
+
+                R.id.navigation_studio -> {
+                    showRootFragment(CardStudioFragment.TAG, CardStudioFragment())
+                    true
+                }
+
+                R.id.navigation_preview -> {
+                    showRootFragment(CardPreviewFragment.TAG, CardPreviewFragment())
+                    true
+                }
+
+                else -> false
+            }
+        }
+
+        if (savedInstanceState == null) {
+            binding.bottomNavigation.selectedItemId = R.id.navigation_home
+        }
+    }
+
+    fun showCardSnapshotDialog() {
+        val state = ModuleStateRepository.loadHomeState()
+        val dialogText = CardSnapshotFormatter.buildDialogText(state)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.dialog_card_list_title)
+            .setMessage(dialogText)
+            .setNeutralButton(R.string.copy_card_info) { _, _ ->
+                copyCardSnapshotText(dialogText)
+            }
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    fun showMessage(message: CharSequence) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+    }
+
+    private fun showRootFragment(tag: String, fragment: Fragment) {
+        supportActionBar?.title = titleForTag(tag)
+        val existing = supportFragmentManager.findFragmentByTag(tag)
+        supportFragmentManager.commitNow(allowStateLoss = false) {
+            supportFragmentManager.fragments.forEach { hide(it) }
+            if (existing == null) {
+                add(R.id.main_fragment_container, fragment, tag)
+            } else {
+                show(existing)
+            }
+        }
+    }
+
+    private fun copyCardSnapshotText(text: String) {
+        val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboardManager.setPrimaryClip(ClipData.newPlainText(getString(R.string.dialog_card_list_title), text))
+        Toast.makeText(this, R.string.copy_card_info_done, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun titleForTag(tag: String): String = when (tag) {
+        HomeFragment.TAG -> getString(R.string.tab_home)
+        CardStudioFragment.TAG -> getString(R.string.tab_studio)
+        CardPreviewFragment.TAG -> getString(R.string.tab_preview)
+        else -> getString(R.string.app_name)
+    }
+}

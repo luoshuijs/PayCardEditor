@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="screen_background">#F4F0E8</color>
+    <color name="surface_card">#FFFCF7</color>
+    <color name="outline_soft">#DDD3C7</color>
+    <color name="text_primary">#172126</color>
+    <color name="text_secondary">#5E6A70</color>
+    <color name="tone_jade">#1F7A5A</color>
+    <color name="tone_jade_soft">#DDF3EA</color>
+    <color name="tone_amber">#A66A15</color>
+    <color name="tone_amber_soft">#FFF0D4</color>
+    <color name="tone_coral">#AF4F3D</color>
+    <color name="tone_coral_soft">#F9E1DB</color>
+    <color name="hero_start">#0E505A</color>
+    <color name="hero_end">#16232A</color>
+    <color name="hero_label">#AEE8DE</color>
+    <color name="hero_body">#D9ECE7</color>
+    <color name="hint_start">#FFF6DE</color>
+    <color name="hint_end">#F9E7C3</color>
+</resources>

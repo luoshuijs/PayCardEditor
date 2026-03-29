@@ -1,0 +1,26 @@
+package com.luoshui.paycardeditor
+
+object HookEnvironment {
+    const val MODULE_PACKAGE = "com.luoshui.paycardeditor"
+    const val TARGET_PACKAGE = "com.miui.tsmclient"
+    const val LOCAL_STATE_PREFS_NAME = "paycardeditor_state"
+    const val SNAPSHOT_PROVIDER_AUTHORITY = "com.luoshui.paycardeditor.snapshot"
+    const val CARD_ASSET_DIRECTORY = "card_assets"
+    const val PREF_KEY_BANK_RULES = "bank_rules"
+    const val PREF_KEY_CARD_ASSETS = "card_assets"
+    const val PREF_KEY_CARD_SNAPSHOTS = "card_snapshots"
+    const val PREF_KEY_LAST_UPDATED = "last_updated"
+    const val PREF_KEY_LAST_SOURCE = "last_source"
+    const val PREF_KEY_LAST_ERROR = "last_error"
+    const val PATH_CARD_ASSETS = "card-assets"
+    const val EXTRA_PAYLOAD = "payload"
+    const val EXTRA_REPLACE = "replace"
+    const val EXTRA_SOURCE = "source"
+    const val EXTRA_ERROR = "error"
+    const val EXTRA_RULES_JSON = "rules_json"
+    const val EXTRA_SNAPSHOTS_JSON = "snapshots_json"
+    const val METHOD_UPSERT_SNAPSHOTS = "upsert_snapshots"
+    const val METHOD_RECORD_ERROR = "record_error"
+    const val METHOD_GET_BANK_RULES = "get_bank_rules"
+    const val METHOD_GET_CARD_SNAPSHOTS = "get_card_snapshots"
+}

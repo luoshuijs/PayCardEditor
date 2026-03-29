@@ -1,0 +1,25 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.PayCardEditor" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/tone_jade</item>
+        <item name="colorSecondary">@color/tone_amber</item>
+        <item name="colorSurface">@color/surface_card</item>
+        <item name="android:windowBackground">@color/screen_background</item>
+    </style>
+
+    <style name="Widget.PayCardEditor.BottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/tone_jade_soft</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.PayCardEditor.BottomNavigation.ActiveIndicator</item>
+    </style>
+
+    <style name="ShapeAppearance.PayCardEditor.BottomNavigation.ActiveIndicator" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="ShapeAppearance.PayCardEditor.CardPreview" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+
+    <style name="Theme.PayCardEditor" parent="Base.Theme.PayCardEditor" />
+</resources>
