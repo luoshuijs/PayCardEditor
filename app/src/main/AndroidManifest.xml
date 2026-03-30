@@ -31,7 +31,6 @@
         <activity
             android:name="com.yalantis.ucrop.UCropActivity"
             android:exported="false"
-            android:screenOrientation="portrait"
             android:theme="@style/Theme.PayCardEditor" />
         <provider
             android:name=".SnapshotSyncProvider"
