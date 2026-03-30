@@ -1,9 +1,9 @@
 package com.luoshui.paycardeditor.hook
 
 import android.content.Context
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import androidx.core.net.toUri
 import com.luoshui.paycardeditor.HookEnvironment
 import io.github.libxposed.api.XposedModule
 
@@ -15,7 +15,7 @@ internal class BankCardRuleResolver(
         private const val CACHE_TTL_MS = 5_000L
     }
 
-    private val providerUri = Uri.parse("content://${HookEnvironment.SNAPSHOT_PROVIDER_AUTHORITY}")
+    private val providerUri = "content://${HookEnvironment.SNAPSHOT_PROVIDER_AUTHORITY}".toUri()
 
     @Volatile
     private var cachedRules: List<BankCardRule> = emptyList()

@@ -1,6 +1,6 @@
 package com.luoshui.paycardeditor
 
-import android.net.Uri
+import androidx.core.net.toUri
 
 internal object CardPreviewImageResolver {
     private const val MI_PAY_DOWNLOAD_BASE = "https://did-cdn.pay.xiaomi.com/mfc/download"
@@ -18,7 +18,7 @@ internal object CardPreviewImageResolver {
         if (value.isEmpty()) {
             return null
         }
-        val scheme = Uri.parse(value).scheme
+        val scheme = value.toUri().scheme
         return if (scheme.isNullOrBlank()) {
             "$MI_PAY_DOWNLOAD_BASE/${value.trimStart('/')}"
         } else {

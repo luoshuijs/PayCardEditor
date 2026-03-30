@@ -1,8 +1,8 @@
 package com.luoshui.paycardeditor.hook
 
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import androidx.core.net.toUri
 import com.luoshui.paycardeditor.CardSnapshot
 import com.luoshui.paycardeditor.HookEnvironment
 import com.luoshui.paycardeditor.firstNonBlank
@@ -26,7 +26,7 @@ internal class RemoteCardSnapshotStore(
     }
 
     private val lock = Any()
-    private val providerUri = Uri.parse("content://${HookEnvironment.SNAPSHOT_PROVIDER_AUTHORITY}")
+    private val providerUri = "content://${HookEnvironment.SNAPSHOT_PROVIDER_AUTHORITY}".toUri()
     private val pendingCalls = ArrayDeque<PendingProviderCall>()
     private var flushingPendingCalls = false
 

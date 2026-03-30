@@ -1,8 +1,8 @@
 package com.luoshui.paycardeditor
 
-import android.graphics.drawable.BitmapDrawable
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.graphics.drawable.toDrawable
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -37,7 +37,7 @@ class CardStudioAdapter(
             )
             val bitmap = CardImageProcessor.decodePreview(File(asset.absolutePath))
             if (bitmap != null) {
-                binding.imagePreview.setImageDrawable(BitmapDrawable(binding.root.resources, bitmap))
+                binding.imagePreview.setImageDrawable(bitmap.toDrawable(binding.root.resources))
             } else {
                 binding.imagePreview.setImageResource(android.R.drawable.ic_menu_report_image)
             }
