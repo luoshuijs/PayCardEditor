@@ -4,6 +4,10 @@
         <item name="colorSecondary">@color/tone_amber</item>
         <item name="colorSurface">@color/surface_card</item>
         <item name="android:windowBackground">@color/screen_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 
     <style name="Widget.PayCardEditor.BottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
