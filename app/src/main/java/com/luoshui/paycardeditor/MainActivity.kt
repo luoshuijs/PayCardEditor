@@ -69,14 +69,20 @@ class MainActivity : AppCompatActivity() {
     private fun showRootFragment(tag: String, fragment: Fragment) {
         supportActionBar?.title = titleForTag(tag)
         val existing = supportFragmentManager.findFragmentByTag(tag)
-        supportFragmentManager.commitNow(allowStateLoss = false) {
-            supportFragmentManager.fragments.forEach { hide(it) }
+        supportFragmentManager.beginTransaction().apply {
+            supportFragmentManager.fragments.forEach { 
+                if (it.isVisible) {
+                    setMaxLifecycle(it, androidx.lifecycle.Lifecycle.State.STARTED)
+                    hide(it)
+                }
+            }
             if (existing == null) {
                 add(R.id.main_fragment_container, fragment, tag)
             } else {
+                setMaxLifecycle(existing, androidx.lifecycle.Lifecycle.State.RESUMED)
                 show(existing)
             }
-        }
+        }.commitNow()
     }
 
     private fun copyCardSnapshotText(text: String) {
