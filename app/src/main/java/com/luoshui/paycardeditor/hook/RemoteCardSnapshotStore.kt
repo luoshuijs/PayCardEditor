@@ -268,6 +268,7 @@ internal object CardReflectionReader {
             isBankCard = invokeBoolean(card, "isBankCard"),
             isTransCard = invokeBoolean(card, "isTransCard"),
             isMifareCard = invokeBoolean(card, "isMiFareCard"),
+            isCarKeyCard = invokeBoolean(card, "isTraditionalCarKeyCard")
         )
     }
 
@@ -276,7 +277,8 @@ internal object CardReflectionReader {
         val isServiceIssued = invokeBoolean(card, "isServiceStatusIssued")
         val hasIssue = readBooleanField(card, "mHasIssue")
         val mifareIssued = invokeBoolean(card, "isMiFareCard") && !invokeBoolean(card, "isDummy")
-        return isActive || isServiceIssued || hasIssue || mifareIssued
+        val carKeyIssued = invokeBoolean(card, "isTraditionalCarKeyCard")
+        return isActive || isServiceIssued || hasIssue || mifareIssued || carKeyIssued
     }
 
     private fun readSerializedJson(card: Any): JSONObject? = runCatching {

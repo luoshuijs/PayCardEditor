@@ -23,9 +23,10 @@ data class CardSnapshot(
     val isBankCard: Boolean = false,
     val isTransCard: Boolean = false,
     val isMifareCard: Boolean = false,
+    val isCarKeyCard: Boolean = false,
 ) {
     val supportsCustomCardArt: Boolean
-        get() = isBankCard || isTransCard || isMifareCard
+        get() = isBankCard || isTransCard || isMifareCard || isCarKeyCard
 
     val key: String
         get() = listOf(
@@ -52,6 +53,7 @@ data class CardSnapshot(
             isBankCard -> "银行卡"
             isTransCard -> "交通卡"
             isMifareCard -> "Mifare/门禁卡"
+            isCarKeyCard -> "车钥匙"
             cardType.isNotBlank() -> cardType
             else -> "未知卡种"
         }
@@ -84,6 +86,7 @@ data class CardSnapshot(
             isBankCard = isBankCard || previous.isBankCard,
             isTransCard = isTransCard || previous.isTransCard,
             isMifareCard = isMifareCard || previous.isMifareCard,
+            isCarKeyCard = isCarKeyCard || previous.isCarKeyCard,
         )
     }
 
@@ -108,6 +111,7 @@ data class CardSnapshot(
         .put("isBankCard", isBankCard)
         .put("isTransCard", isTransCard)
         .put("isMifareCard", isMifareCard)
+        .put("isCarKeyCard", isCarKeyCard)
 
     companion object {
         fun fromJson(jsonObject: JSONObject): CardSnapshot = CardSnapshot(
@@ -131,6 +135,7 @@ data class CardSnapshot(
             isBankCard = jsonObject.optBoolean("isBankCard"),
             isTransCard = jsonObject.optBoolean("isTransCard"),
             isMifareCard = jsonObject.optBoolean("isMifareCard"),
+            isCarKeyCard = jsonObject.optBoolean("isCarKeyCard"),
         )
 
         fun normalize(value: String?): String {
