@@ -2,6 +2,7 @@ package com.luoshui.paycardeditor
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -28,9 +29,9 @@ class CardStudioFragment : Fragment() {
 
     private var pendingCrop: PendingCrop? = null
 
-    private val imagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) {
-            startCrop(uri, pendingCrop ?: PendingCrop())
+    private val imagePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data?.data != null) {
+            startCrop(result.data!!.data!!, pendingCrop ?: PendingCrop())
         }
     }
 
@@ -86,7 +87,8 @@ class CardStudioFragment : Fragment() {
 
     private fun pickNewAsset() {
         pendingCrop = PendingCrop(assetId = null, displayName = getString(R.string.asset_default_name))
-        imagePicker.launch("image/*")
+        val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
+        imagePicker.launch(intent)
     }
 
     private fun showApplyDialog(asset: CardAsset) {
@@ -142,7 +144,8 @@ class CardStudioFragment : Fragment() {
 
     private fun replaceAsset(asset: CardAsset) {
         pendingCrop = PendingCrop(assetId = asset.id, displayName = asset.displayName)
-        imagePicker.launch("image/*")
+        val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
+        imagePicker.launch(intent)
     }
 
     private fun deleteAsset(asset: CardAsset) {
