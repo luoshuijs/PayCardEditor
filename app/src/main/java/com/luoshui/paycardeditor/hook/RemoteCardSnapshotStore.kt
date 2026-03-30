@@ -205,142 +205,103 @@ internal class RemoteCardSnapshotStore(
 
 internal object CardReflectionReader {
     fun read(card: Any): CardSnapshot? {
-        if (!shouldIncludeCard(card)) {
+        val accessors = CardClassAccessors.of(card.javaClass)
+        
+        if (!shouldIncludeCard(card, accessors)) {
             return null
         }
-        val json = readSerializedJson(card)
+        
+        // Try to read serialized JSON first (lazy fallback for UI fields)
+        val json = accessors.readSerializedJson(card)
         val cardUiInfo = json?.optJSONObject("card_ui_info")
-        val cardUiInfoObject = readObjectField(card, "mCardUIInfo")
+        val cardUiInfoObject = accessors.readObjectField(card, accessors.mCardUIInfoField)
+        
         val aid = firstNonBlank(
             CardSnapshot.normalize(json?.optString("aid")),
-            invokeString(card, "getAid"),
+            accessors.invokeString(card, accessors.getAidMethod),
         )
         val cardType = firstNonBlank(
             CardSnapshot.normalize(json?.optString("cardType")),
-            invokeString(card, "getCardType"),
+            accessors.invokeString(card, accessors.getCardTypeMethod),
         )
         val cardName = firstNonBlank(
             CardSnapshot.normalize(json?.optString("title")),
-            invokeString(card, "getCardName"),
-            invokeString(card, "getProductName"),
-            readField(card, "mCardProductName"),
-            readField(card, "mProductName"),
-            readField(card, "mBankName"),
+            accessors.invokeString(card, accessors.getCardNameMethod),
+            accessors.invokeString(card, accessors.getProductNameMethod),
+            accessors.readStringField(card, accessors.mCardProductNameField),
+            accessors.readStringField(card, accessors.mProductNameField),
+            accessors.readStringField(card, accessors.mBankNameField),
         )
+        
         if (aid.isBlank() && cardType.isBlank() && cardName.isBlank()) {
             return null
         }
+        
         return CardSnapshot(
             aid = aid,
             cardType = cardType,
             cardName = cardName,
-            cardNo = firstNonBlank(invokeString(card, "getCardNo"), readField(card, "mCardNo")),
-            realCardNo = readField(card, "mRealCardNo"),
-            issuerName = firstNonBlank(readField(card, "mIssuerName"), readField(card, "mBankName")),
-            productId = firstNonBlank(invokeString(card, "getProductId"), readField(card, "mProductId"), readField(card, "mCardProductTypeId")),
-            cid = firstNonBlank(invokeString(card, "getCid"), readField(card, "mCId")),
-            vcUid = firstNonBlank(invokeString(card, "getVcUid"), readField(card, "mVcUid")),
-            panLastDigits = readField(card, "mPanLastDigits"),
+            cardNo = firstNonBlank(
+                accessors.invokeString(card, accessors.getCardNoMethod),
+                accessors.readStringField(card, accessors.mCardNoField)
+            ),
+            realCardNo = accessors.readStringField(card, accessors.mRealCardNoField),
+            issuerName = firstNonBlank(
+                accessors.readStringField(card, accessors.mIssuerNameField),
+                accessors.readStringField(card, accessors.mBankNameField)
+            ),
+            productId = firstNonBlank(
+                accessors.invokeString(card, accessors.getProductIdMethod),
+                accessors.readStringField(card, accessors.mProductIdField),
+                accessors.readStringField(card, accessors.mCardProductTypeIdField)
+            ),
+            cid = firstNonBlank(
+                accessors.invokeString(card, accessors.getCidMethod),
+                accessors.readStringField(card, accessors.mCIdField)
+            ),
+            vcUid = firstNonBlank(
+                accessors.invokeString(card, accessors.getVcUidMethod),
+                accessors.readStringField(card, accessors.mVcUidField)
+            ),
+            panLastDigits = accessors.readStringField(card, accessors.mPanLastDigitsField),
             cardArt = firstNonBlank(
                 CardSnapshot.normalize(json?.optString("cardArt")),
-                invokeString(card, "getCardArt"),
-                readField(card, "mCardArt"),
+                accessors.invokeString(card, accessors.getCardArtMethod),
+                accessors.readStringField(card, accessors.mCardArtField),
             ),
-            cardFrontColor = readField(card, "mCardFrontColor"),
+            cardFrontColor = accessors.readStringField(card, accessors.mCardFrontColorField),
             personalCardFace = firstNonBlank(
                 CardSnapshot.normalize(cardUiInfo?.optString("personalCardFace")),
-                readField(cardUiInfoObject, "mPersonalCardFace"),
+                accessors.getUIInfoField(cardUiInfoObject, "mPersonalCardFace"),
             ),
             issuedListBgHd = firstNonBlank(
                 CardSnapshot.normalize(cardUiInfo?.optString("issuedListBgHd")),
-                readField(cardUiInfoObject, "mCardIssuedListBgHdUrl"),
+                accessors.getUIInfoField(cardUiInfoObject, "mCardIssuedListBgHdUrl"),
             ),
             issuedListBg = firstNonBlank(
                 CardSnapshot.normalize(cardUiInfo?.optString("issuedListBg")),
-                readField(cardUiInfoObject, "mCardIssuedListBgUrl"),
+                accessors.getUIInfoField(cardUiInfoObject, "mCardIssuedListBgUrl"),
             ),
             logo = firstNonBlank(
                 CardSnapshot.normalize(cardUiInfo?.optString("logo")),
-                readField(cardUiInfoObject, "mCardLogoUrl"),
-                readField(card, "mBankLogoUrl"),
+                accessors.getUIInfoField(cardUiInfoObject, "mCardLogoUrl"),
+                accessors.readStringField(card, accessors.mBankLogoUrlField),
             ),
-            logoWithName = readField(card, "mBankLogoWithNameUrl"),
-            isBankCard = invokeBoolean(card, "isBankCard"),
-            isTransCard = invokeBoolean(card, "isTransCard"),
-            isMifareCard = invokeBoolean(card, "isMiFareCard"),
-            isCarKeyCard = invokeBoolean(card, "isTraditionalCarKeyCard")
+            logoWithName = accessors.readStringField(card, accessors.mBankLogoWithNameUrlField),
+            isBankCard = accessors.invokeBoolean(card, accessors.isBankCardMethod),
+            isTransCard = accessors.invokeBoolean(card, accessors.isTransCardMethod),
+            isMifareCard = accessors.invokeBoolean(card, accessors.isMiFareCardMethod),
+            isCarKeyCard = accessors.invokeBoolean(card, accessors.isTraditionalCarKeyCardMethod)
         )
     }
 
-    private fun shouldIncludeCard(card: Any): Boolean {
-        val isActive = invokeBoolean(card, "isCardActive")
-        val isServiceIssued = invokeBoolean(card, "isServiceStatusIssued")
-        val hasIssue = readBooleanField(card, "mHasIssue")
-        val mifareIssued = invokeBoolean(card, "isMiFareCard") && !invokeBoolean(card, "isDummy")
-        val carKeyIssued = invokeBoolean(card, "isTraditionalCarKeyCard")
+    private fun shouldIncludeCard(card: Any, accessors: CardClassAccessors): Boolean {
+        val isActive = accessors.invokeBoolean(card, accessors.isCardActiveMethod)
+        val isServiceIssued = accessors.invokeBoolean(card, accessors.isServiceStatusIssuedMethod)
+        val hasIssue = accessors.readBooleanField(card, accessors.mHasIssueField)
+        val mifareIssued = accessors.invokeBoolean(card, accessors.isMiFareCardMethod) && 
+                          !accessors.invokeBoolean(card, accessors.isDummyMethod)
+        val carKeyIssued = accessors.invokeBoolean(card, accessors.isTraditionalCarKeyCardMethod)
         return isActive || isServiceIssued || hasIssue || mifareIssued || carKeyIssued
-    }
-
-    private fun readSerializedJson(card: Any): JSONObject? = runCatching {
-        val method = card.javaClass.methods.firstOrNull { it.name == "serialize" && it.parameterCount == 0 } ?: return null
-        method.invoke(card) as? JSONObject
-    }.getOrNull()
-
-    private fun invokeString(card: Any, methodName: String): String = runCatching {
-        val method = card.javaClass.methods.firstOrNull { it.name == methodName && it.parameterCount == 0 } ?: return ""
-        CardSnapshot.normalize(method.invoke(card) as? String)
-    }.getOrDefault("")
-
-    private fun invokeBoolean(card: Any, methodName: String): Boolean = runCatching {
-        val method = card.javaClass.methods.firstOrNull { it.name == methodName && it.parameterCount == 0 } ?: return false
-        method.invoke(card) as? Boolean ?: false
-    }.getOrDefault(false)
-
-    private fun readField(card: Any?, fieldName: String): String {
-        if (card == null) {
-            return ""
-        }
-        var current: Class<*>? = card.javaClass
-        while (current != null) {
-            val field = current.declaredFields.firstOrNull { it.name == fieldName }
-            if (field != null) {
-                return runCatching {
-                    field.isAccessible = true
-                    CardSnapshot.normalize(field.get(card) as? String)
-                }.getOrDefault("")
-            }
-            current = current.superclass
-        }
-        return ""
-    }
-
-    private fun readObjectField(card: Any, fieldName: String): Any? {
-        var current: Class<*>? = card.javaClass
-        while (current != null) {
-            val field = current.declaredFields.firstOrNull { it.name == fieldName }
-            if (field != null) {
-                return runCatching {
-                    field.isAccessible = true
-                    field.get(card)
-                }.getOrNull()
-            }
-            current = current.superclass
-        }
-        return null
-    }
-
-    private fun readBooleanField(card: Any, fieldName: String): Boolean {
-        var current: Class<*>? = card.javaClass
-        while (current != null) {
-            val field = current.declaredFields.firstOrNull { it.name == fieldName }
-            if (field != null) {
-                return runCatching {
-                    field.isAccessible = true
-                    field.getBoolean(card)
-                }.getOrDefault(false)
-            }
-            current = current.superclass
-        }
-        return false
     }
 }

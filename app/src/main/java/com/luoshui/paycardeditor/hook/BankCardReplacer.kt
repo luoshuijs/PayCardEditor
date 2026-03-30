@@ -41,19 +41,7 @@ internal class BankCardReplacer(
     }
 
     private fun applyObjectField(card: Any, fieldName: String, replacement: Any): Boolean {
-        var current: Class<*>? = card.javaClass
-        while (current != null) {
-            val field = current.declaredFields.firstOrNull { it.name == fieldName }
-            if (field != null) {
-                return runCatching {
-                    field.isAccessible = true
-                    field.set(card, replacement)
-                    true
-                }.getOrDefault(false)
-            }
-            current = current.superclass
-        }
-        return false
+        return ReflectionCacheUtils.setObjectField(card, fieldName, replacement)
     }
 
 }
