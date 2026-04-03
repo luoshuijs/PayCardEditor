@@ -1,4 +1,4 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.core
 
 object HookEnvironment {
     const val MODULE_PACKAGE = "com.luoshui.paycardeditor"

@@ -1,8 +1,12 @@
 package com.luoshui.paycardeditor.hook
 
+import com.luoshui.paycardeditor.core.HookEnvironment
+import com.luoshui.paycardeditor.data.CardAssetRepository
+
+
 import android.content.Context
 import android.util.Log
-import com.luoshui.paycardeditor.CardSnapshot
+import com.luoshui.paycardeditor.model.CardSnapshot
 import io.github.libxposed.api.XposedModule
 
 internal class BankCardReplacer(

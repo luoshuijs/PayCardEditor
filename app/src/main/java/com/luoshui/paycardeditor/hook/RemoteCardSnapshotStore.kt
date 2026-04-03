@@ -3,9 +3,9 @@ package com.luoshui.paycardeditor.hook
 import android.os.Bundle
 import android.util.Log
 import androidx.core.net.toUri
-import com.luoshui.paycardeditor.CardSnapshot
-import com.luoshui.paycardeditor.HookEnvironment
-import com.luoshui.paycardeditor.firstNonBlank
+import com.luoshui.paycardeditor.core.HookEnvironment
+import com.luoshui.paycardeditor.model.CardSnapshot
+import com.luoshui.paycardeditor.model.firstNonBlank
 import io.github.libxposed.api.XposedModule
 import org.json.JSONArray
 import org.json.JSONObject

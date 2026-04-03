@@ -1,4 +1,7 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.feature.troubleshoot
+
+import com.luoshui.paycardeditor.R
+
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

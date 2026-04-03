@@ -1,4 +1,4 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.app
 
 import android.app.Application
 import android.content.Context

@@ -1,35 +1,46 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.feature.home
 
+import com.luoshui.paycardeditor.R
+import com.luoshui.paycardeditor.app.App
+import com.luoshui.paycardeditor.app.MainActivity
+import com.luoshui.paycardeditor.core.MiPayNavigator
+import com.luoshui.paycardeditor.data.ModuleStateRepository
+import com.luoshui.paycardeditor.feature.troubleshoot.TroubleshootActivity
+import com.luoshui.paycardeditor.model.CardSnapshotFormatter
+import com.luoshui.paycardeditor.model.ModuleStatusLevel
+import com.luoshui.paycardeditor.model.ModuleStatusState
 import android.content.res.ColorStateList
+import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import com.luoshui.paycardeditor.databinding.FragmentFirstBinding
+import androidx.fragment.app.Fragment
+import com.luoshui.paycardeditor.databinding.FragmentHomeBinding
 import io.github.libxposed.service.XposedService
 
-class FirstFragment : Fragment(), App.ServiceStateListener {
+class HomeFragment : Fragment(), App.ServiceStateListener {
 
-    private var _binding: FragmentFirstBinding? = null
+    private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-
-        _binding = FragmentFirstBinding.inflate(inflater, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.buttonRefresh.setOnClickListener { renderState() }
+        binding.buttonSyncSnapshot.setOnClickListener {
+            renderState()
+            (activity as? MainActivity)?.showCardSnapshotDialog()
+        }
+        binding.buttonOpenMipay.setOnClickListener { MiPayNavigator.open(requireContext()) }
+        binding.buttonTroubleshoot.setOnClickListener {
+            startActivity(Intent(requireContext(), TroubleshootActivity::class.java))
+        }
         renderState()
     }
 
@@ -59,7 +70,6 @@ class FirstFragment : Fragment(), App.ServiceStateListener {
     private fun renderState() {
         val state = ModuleStateRepository.loadHomeState()
         renderModuleStatus(state.moduleStatus)
-
         binding.textCardCount.text = getString(R.string.snapshot_count_format, state.cardState.cards.size)
         binding.textLastUpdated.text = getString(
             R.string.last_updated_format,
@@ -69,7 +79,6 @@ class FirstFragment : Fragment(), App.ServiceStateListener {
             R.string.last_source_format,
             state.cardState.lastSource.ifBlank { getString(R.string.none_label) },
         )
-        binding.textPreview.text = CardSnapshotFormatter.buildPreview(state.cardState.cards)
         binding.textWarning.isVisible = state.cardState.warning.isNotBlank()
         binding.textWarning.text = state.cardState.warning
     }
@@ -77,22 +86,24 @@ class FirstFragment : Fragment(), App.ServiceStateListener {
     private fun renderModuleStatus(status: ModuleStatusState) {
         binding.textActivationTitle.text = status.title
         binding.textActivationDetail.text = status.detail
-
         val (indicator, container, stroke) = when (status.level) {
             ModuleStatusLevel.ACTIVE -> Triple(R.color.tone_jade, R.color.tone_jade_soft, R.color.tone_jade)
             ModuleStatusLevel.WAITING -> Triple(R.color.tone_amber, R.color.tone_amber_soft, R.color.tone_amber)
             ModuleStatusLevel.INACTIVE -> Triple(R.color.tone_coral, R.color.tone_coral_soft, R.color.tone_coral)
         }
-
         binding.viewActivationIndicator.backgroundTintList = ColorStateList.valueOf(color(indicator))
         binding.cardActivation.setCardBackgroundColor(color(container))
         binding.cardActivation.strokeColor = color(stroke)
     }
+
+    private fun color(colorRes: Int): Int = ContextCompat.getColor(requireContext(), colorRes)
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 
-    private fun color(colorRes: Int): Int = ContextCompat.getColor(requireContext(), colorRes)
+    companion object {
+        const val TAG = "home"
+    }
 }

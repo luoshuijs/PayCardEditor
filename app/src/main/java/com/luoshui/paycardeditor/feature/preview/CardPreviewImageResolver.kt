@@ -1,4 +1,7 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.feature.preview
+
+import com.luoshui.paycardeditor.model.CardSnapshot
+
 
 import androidx.core.net.toUri
 

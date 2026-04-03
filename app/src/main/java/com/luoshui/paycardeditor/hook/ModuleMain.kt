@@ -1,7 +1,7 @@
 package com.luoshui.paycardeditor.hook
 
 import android.util.Log
-import com.luoshui.paycardeditor.HookEnvironment
+import com.luoshui.paycardeditor.core.HookEnvironment
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface.ModuleLoadedParam
 import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam

@@ -1,5 +1,11 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.app
 
+import com.luoshui.paycardeditor.R
+import com.luoshui.paycardeditor.data.ModuleStateRepository
+import com.luoshui.paycardeditor.feature.home.HomeFragment
+import com.luoshui.paycardeditor.feature.preview.CardPreviewFragment
+import com.luoshui.paycardeditor.feature.studio.CardStudioFragment
+import com.luoshui.paycardeditor.model.CardSnapshotFormatter
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context

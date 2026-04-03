@@ -1,4 +1,9 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.feature.studio
+
+import com.luoshui.paycardeditor.R
+import com.luoshui.paycardeditor.data.BankCardRuleRepository
+import com.luoshui.paycardeditor.data.CardAsset
+
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

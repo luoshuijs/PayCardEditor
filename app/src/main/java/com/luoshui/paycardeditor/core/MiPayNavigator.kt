@@ -1,4 +1,7 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.core
+
+import com.luoshui.paycardeditor.R
+
 
 import android.content.ActivityNotFoundException
 import android.content.Context

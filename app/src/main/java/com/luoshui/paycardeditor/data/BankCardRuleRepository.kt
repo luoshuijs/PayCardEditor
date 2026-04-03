@@ -1,4 +1,9 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.data
+
+import com.luoshui.paycardeditor.app.App
+import com.luoshui.paycardeditor.core.HookEnvironment
+import com.luoshui.paycardeditor.model.CardSnapshot
+
 
 import android.content.Context
 import androidx.core.content.edit

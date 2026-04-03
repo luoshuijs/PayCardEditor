@@ -1,4 +1,4 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.model
 
 data class TroubleshootState(
     val debugInfo: String,

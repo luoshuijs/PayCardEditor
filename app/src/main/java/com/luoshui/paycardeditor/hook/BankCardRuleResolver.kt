@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.core.net.toUri
-import com.luoshui.paycardeditor.HookEnvironment
+import com.luoshui.paycardeditor.core.HookEnvironment
 import io.github.libxposed.api.XposedModule
 
 internal class BankCardRuleResolver(

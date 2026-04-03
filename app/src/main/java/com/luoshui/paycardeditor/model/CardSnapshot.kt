@@ -1,4 +1,4 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.model
 
 import org.json.JSONObject
 

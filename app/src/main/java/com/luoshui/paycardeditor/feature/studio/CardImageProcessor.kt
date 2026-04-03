@@ -1,4 +1,7 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.feature.studio
+
+import com.luoshui.paycardeditor.data.CardAssetRepository
+
 
 import android.content.Context
 import android.graphics.Bitmap

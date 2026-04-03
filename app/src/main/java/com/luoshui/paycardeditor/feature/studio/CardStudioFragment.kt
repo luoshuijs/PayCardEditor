@@ -1,4 +1,12 @@
-package com.luoshui.paycardeditor
+package com.luoshui.paycardeditor.feature.studio
+
+import com.luoshui.paycardeditor.R
+import com.luoshui.paycardeditor.app.MainActivity
+import com.luoshui.paycardeditor.data.BankCardRuleRepository
+import com.luoshui.paycardeditor.data.CardAsset
+import com.luoshui.paycardeditor.data.CardAssetRepository
+import com.luoshui.paycardeditor.data.ModuleStateRepository
+
 
 import android.app.Activity
 import android.content.ActivityNotFoundException

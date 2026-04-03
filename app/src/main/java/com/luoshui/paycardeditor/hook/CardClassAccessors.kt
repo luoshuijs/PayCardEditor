@@ -1,6 +1,6 @@
 package com.luoshui.paycardeditor.hook
 
-import com.luoshui.paycardeditor.CardSnapshot
+import com.luoshui.paycardeditor.model.CardSnapshot
 import org.json.JSONObject
 import java.lang.reflect.Field
 import java.lang.reflect.Method
