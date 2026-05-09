@@ -25,6 +25,12 @@ jobs:
   build:
     name: Build APK
     runs-on: ubuntu-latest
+    # Bind to the "Build" GitHub environment that holds the signing secrets
+    # (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD).
+    # Workflows without an environment declaration cannot read environment
+    # secrets, only repository secrets. Debug builds also run under this
+    # environment but do not consume the secrets, so the binding is safe.
+    environment: Build
     env:
       # AGP 9.1 requires JDK 17+, the project compiles with Java 21.
       JAVA_VERSION: '21'
