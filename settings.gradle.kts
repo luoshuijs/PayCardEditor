@@ -19,12 +19,15 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Optional local override for libxposed builds-from-source.
+        // Maven Central is the primary source; mavenLocal is consulted only
+        // when a developer publishes a custom snapshot locally.
         mavenLocal {
             content {
                 includeGroup("io.github.libxposed")
             }
         }
-        maven { url = uri("https://jitpack.io")   }
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
