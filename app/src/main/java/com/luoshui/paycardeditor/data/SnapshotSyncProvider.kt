@@ -44,6 +44,11 @@ class SnapshotSyncProvider : ContentProvider() {
             HookEnvironment.METHOD_GET_CARD_SNAPSHOTS -> return Bundle().apply {
                 putString(HookEnvironment.EXTRA_SNAPSHOTS_JSON, loadSnapshotsJson(prefs))
             }
+            HookEnvironment.METHOD_UPSERT_DEXKIT_CACHE -> upsertDexKitCache(prefs, extras)
+            HookEnvironment.METHOD_GET_DEXKIT_CACHE -> return Bundle().apply {
+                putString(HookEnvironment.EXTRA_DEXKIT_CACHE_JSON, loadDexKitCacheJson(prefs))
+            }
+            HookEnvironment.METHOD_CLEAR_DEXKIT_CACHE -> clearDexKitCache(prefs)
         }
         return Bundle()
     }
@@ -170,6 +175,25 @@ class SnapshotSyncProvider : ContentProvider() {
 
     private fun loadSnapshotsJson(prefs: android.content.SharedPreferences): String =
         prefs.getString(HookEnvironment.PREF_KEY_CARD_SNAPSHOTS, "[]").orEmpty().ifBlank { "[]" }
+
+    /**
+     * Persists a serialized DexKit descriptor bundle keyed by host APK + module identity.
+     * The provider performs no schema validation; the hook side is the source of truth for
+     * cache shape and is responsible for invalidating on mismatch.
+     */
+    private fun upsertDexKitCache(prefs: android.content.SharedPreferences, extras: Bundle?) {
+        val payload = extras?.getString(HookEnvironment.EXTRA_DEXKIT_CACHE_JSON).orEmpty()
+        prefs.edit {
+            putString(HookEnvironment.PREF_KEY_DEXKIT_CACHE, payload)
+        }
+    }
+
+    private fun loadDexKitCacheJson(prefs: android.content.SharedPreferences): String =
+        prefs.getString(HookEnvironment.PREF_KEY_DEXKIT_CACHE, "").orEmpty()
+
+    private fun clearDexKitCache(prefs: android.content.SharedPreferences) {
+        prefs.edit { remove(HookEnvironment.PREF_KEY_DEXKIT_CACHE) }
+    }
 
     private fun resolveAssetFile(assetId: String): java.io.File? {
         val baseDir = context?.filesDir?.resolve(HookEnvironment.CARD_ASSET_DIRECTORY) ?: run {
