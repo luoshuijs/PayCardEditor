@@ -41,6 +41,12 @@ final class ImageCacheHookRegistrar {
 
     private final XposedModule mModule;
     private final HookInstallerSupport mSupport;
+    /**
+     * Reverse map {@code base36 cache token → CacheReplacementTarget}, populated by the
+     * {@code m1.a(...)} interceptor in {@link #installGlideTokenHooks}. This is the only
+     * way to resolve a disk-cache {@code sourceKey} back to the original remote URL —
+     * see the long-form rationale on that method before considering any change here.
+     */
     private final Map<String, CacheReplacementTarget> mDynamicSourceKeyMap = new HashMap<>();
     private final Map<String, CacheReplacementTarget> mProtectedSafeKeyMap = new HashMap<>();
     private final Map<String, Object> mSafeKeyWriteLocks = new ConcurrentHashMap<>();
@@ -58,6 +64,60 @@ final class ImageCacheHookRegistrar {
         installGlideDiskCacheHooks(dexKitTargets);
     }
 
+    /**
+     * Installs an interceptor on {@code com.miui.tsmclient.util.m1.a(String)}.
+     *
+     * <h3>DO NOT REMOVE — this is the only bridge between remote URLs and Glide cache tokens.</h3>
+     *
+     * <p><b>Why the name is misleading:</b> jadx labels the source as
+     * {@code Md5FileNameGenerator.java}. That filename is shared with a deprecated Glide v3
+     * helper, which makes it tempting to assume the hook is dead code. <em>It is not.</em>
+     * The actual class is MiPay's own utility {@code com.miui.tsmclient.util.m1}, and Glide
+     * v4 uses it as the cache-key transform on the hot path.
+     *
+     * <p><b>Verified call chain (jadx, host APK 9.21.0.001):</b>
+     * <pre>
+     *  remoteUrl  ──CustomGlideUrl──▶  GlideUrl.getCacheKey()
+     *                                       │
+     *                                       ▼
+     *                             new m1().a(url)   ◀── this hook
+     *                                       │  (md5 → base36 hash)
+     *                                       ▼
+     *                       SafeKeyGenerator.getSafeKey(Key)
+     *                                       │
+     *                                       ▼
+     *                          safeKey = SHA-256(cacheKey)
+     *                                       │
+     *                                       ▼
+     *                  /cache/image_manager_disk_cache/&lt;safeKey&gt;.0
+     * </pre>
+     * Concrete callers proven via jadx xref:
+     * <ul>
+     *   <li>{@code com.miui.tsmclient.util.h0} (CustomGlideUrl) — overrides
+     *       {@code GlideUrl.getCacheKey()} and pipes the URL through {@code m1.a(...)}.</li>
+     *   <li>{@code com.miui.tsmclient.ui.widget.SlideView.g(CardInfo)} — derives the
+     *       {@code R.id.cardstack_url_tag} dedup token via {@code new m1().a(cardArt)} so it
+     *       can detect when a card face URL changes.</li>
+     * </ul>
+     *
+     * <p><b>Why we must hook it:</b> the {@code DiskLruCacheWrapper} hooks below see the
+     * cache {@code Key} as a {@code toString()} blob containing
+     * {@code sourceKey=&lt;base36&gt;}, which is the OUTPUT of {@code m1.a(...)}. Without the
+     * inverse mapping recorded here ({@code base36 → remoteUrl → CacheReplacementTarget})
+     * we cannot decide whether a given disk-cache lookup belongs to a card art we want to
+     * replace. Empirical confirmation: keys observed at runtime have the shape
+     * {@code ResourceCacheKey{sourceKey=wos5kmf6987y95dky4dw23yb,...}}, i.e. pure base36
+     * hashes that only this hook can resolve back to URLs.
+     *
+     * <p><b>Why the result is not persisted to SharedPreferences:</b> {@code m1.a} is
+     * deterministic for a given URL, so caching tokens across launches is technically
+     * possible — but harmful in practice. The mapping we actually care about
+     * ({@code sourceKey → CacheReplacementTarget}) depends on the user's current rules,
+     * which already live in {@link #mCacheReplacementMap} and refresh every 5s from the
+     * provider. Stale cross-process token caches would pin retired {@code assetId}s after a
+     * rule change. Letting the hook re-fill {@link #mDynamicSourceKeyMap} on each run keeps
+     * the rule edit → effect window bounded by Glide's own re-fetch cadence.
+     */
     void installGlideTokenHooks(@NonNull DexKitHookTargets dexKitTargets) {
         try {
             Method generateToken = dexKitTargets.getGlideTokenGenerate();
@@ -203,6 +263,10 @@ final class ImageCacheHookRegistrar {
         if (sourceKeyToken == null || sourceKeyToken.isEmpty()) {
             return null;
         }
+        // Fallback path: the disk-cache key only exposed a base36 sourceKey blob, not the
+        // raw URL. Look it up in the reverse map populated by the m1.a hook (see
+        // installGlideTokenHooks). Without that hook this branch is dead and replacement
+        // misses any card whose disk-cache Key.toString() format hides the URL.
         synchronized (mDynamicSourceKeyMap) {
             CacheReplacementTarget dynamicSourceKeyTarget = mDynamicSourceKeyMap.get(sourceKeyToken);
             if (dynamicSourceKeyTarget != null) {
@@ -628,6 +692,12 @@ final class ImageCacheHookRegistrar {
         }
     }
 
+    /**
+     * Records a {@code rawInput → sourceKeyToken} pair observed inside the {@code m1.a}
+     * interceptor. Only stores entries whose {@code rawInput} matches a current replacement
+     * target, so the map stays bounded by the active rule set rather than every URL Glide
+     * happens to load. See {@link #installGlideTokenHooks} for the rationale.
+     */
     private void rememberDynamicSourceKey(@NonNull String rawInput, @NonNull String sourceKeyToken) {
         Context context = HookProcessContext.INSTANCE.resolve();
         if (context == null) {

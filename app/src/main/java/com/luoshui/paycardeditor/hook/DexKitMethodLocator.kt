@@ -252,6 +252,18 @@ internal object DexKitMethodLocator {
         // for replacement lookup. Empirical verification: probing real disk-cache keys shows
         // shapes like `ResourceCacheKey{sourceKey=wos5kmf6987y95dky4dw23yb, ...}` — pure
         // base36 hashes — confirming this is the dynamic mapping's only source of truth.
+        //
+        // jadx re-verification (host APK 9.21.0.001):
+        //   * `com.miui.tsmclient.util.m1` source filename is `Md5FileNameGenerator.java`
+        //     (jadx INFO comment), but the class belongs to MiPay, NOT Glide v3. Body:
+        //         BigInteger(md5(url.bytes)).abs().toString(36)
+        //   * `com.miui.tsmclient.util.h0` (`CustomGlideUrl extends GlideUrl`) overrides
+        //     `getCacheKey()` and pipes the URL through `new m1().a(...)` — i.e. m1 IS the
+        //     Glide v4 cache-key transform on the hot path.
+        //   * `com.miui.tsmclient.ui.widget.SlideView.g(CardInfo)` derives the
+        //     `R.id.cardstack_url_tag` dedup token via `new m1().a(cardArt)` to detect
+        //     when a card face URL changes between rebinds.
+        // See ImageCacheHookRegistrar.installGlideTokenHooks for the consumer side.
         val tokenGeneratorClasses = bridge.findClass {
             matcher {
                 fields {
