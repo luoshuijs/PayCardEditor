@@ -16,6 +16,7 @@
 | AndroidX          | Android Open Source Project, Google Inc. | https://github.com/androidx/androidx        |
 | libxposed-service | libxposed                                | https://github.com/libxposed/service        |
 | libxposed-api     | libxposed                                | https://github.com/libxposed/api            |
+| DexKit            | LuckyPray                                | https://github.com/LuckyPray/DexKit         |
 | MiPayCard         | gddhy                                    | https://github.com/gddhy/MiPayCard          |
 | HyperCeiler       | ReChronoRain                             | https://github.com/ReChronoRain/HyperCeiler |
 | QAuxiliary        | cinit                                    | https://github.com/cinit/QAuxiliary         |
