@@ -153,7 +153,7 @@ final class MemoryCacheHookRegistrar {
      *     <li>If the key is an {@code EngineKey}, it stores the load model as a private field
      *         (typically the URL string). We reflectively read any {@code java.lang.Object}
      *         field whose value is a {@link String} and check it against the replacement map.</li>
-     *     <li>As a fallback, we run {@link #containsReplacementToken(String)} over
+     *     <li>As a fallback, we run {@link #containsReplacementToken(String, Map)} over
      *         {@code String.valueOf(key)}, which works for {@code ResourceCacheKey} and
      *         {@code DataCacheKey} since their {@code toString} embeds the {@code sourceKey}
      *         that the disk layer already maps.</li>
