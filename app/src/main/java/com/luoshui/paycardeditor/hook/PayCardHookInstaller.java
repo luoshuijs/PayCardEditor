@@ -19,6 +19,7 @@ final class PayCardHookInstaller {
     private final HookInstallerSupport mSupport;
     private final CardDataHookRegistrar mCardDataHooks;
     private final ImageCacheHookRegistrar mImageCacheHooks;
+    private final MemoryCacheHookRegistrar mMemoryCacheHooks;
     private final HookDebugReporter mDebugReporter;
 
     private volatile boolean mInstalled = false;
@@ -30,6 +31,7 @@ final class PayCardHookInstaller {
         mSupport = new HookInstallerSupport(module, mInstalledHookRecords);
         mCardDataHooks = new CardDataHookRegistrar(module, mSnapshotStore, bankCardReplacer, mSupport);
         mImageCacheHooks = new ImageCacheHookRegistrar(module, mSupport);
+        mMemoryCacheHooks = new MemoryCacheHookRegistrar(module, mSupport, mImageCacheHooks);
         mDebugReporter = new HookDebugReporter(module, mSnapshotStore, mSupport);
     }
 
@@ -52,6 +54,7 @@ final class PayCardHookInstaller {
                 anyInstalled |= installHookGroup("CardInfoManager hooks", () -> mCardDataHooks.installManagerHooks(cardInfoClass, cardInfoManagerClass, cacheLauncherClass));
                 anyInstalled |= installHookGroup("Bank data hooks", () -> mCardDataHooks.installBankHooks(dexKitTargets));
                 anyInstalled |= installHookGroup("Image cache hooks", () -> mImageCacheHooks.installImageHooks(dexKitTargets));
+                anyInstalled |= installHookGroup("Memory cache hooks", () -> mMemoryCacheHooks.installMemoryHooks(classLoader));
                 anyInstalled |= installHookGroup("Transit hooks", () -> mCardDataHooks.installTransitHooks(cardInfoClass, dexKitTargets));
                 anyInstalled |= installHookGroup("Mifare hooks", () -> mCardDataHooks.installMifareHooks(dexKitTargets));
                 mDebugReporter.publishTroubleshootState(apkPath, cardInfoClass, cardInfoManagerClass, cacheLauncherClass, dexKitTargets, mImageCacheHooks);

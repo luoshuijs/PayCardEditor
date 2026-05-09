@@ -25,6 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface.ExceptionMode;
 import io.github.libxposed.api.XposedModule;
@@ -42,6 +43,8 @@ final class ImageCacheHookRegistrar {
     private final HookInstallerSupport mSupport;
     private final Map<String, CacheReplacementTarget> mDynamicSourceKeyMap = new HashMap<>();
     private final Map<String, CacheReplacementTarget> mProtectedSafeKeyMap = new HashMap<>();
+    private final Map<String, Object> mSafeKeyWriteLocks = new ConcurrentHashMap<>();
+    private final Map<String, Long> mLastReplacementTimestampMap = new ConcurrentHashMap<>();
     private volatile long mCacheReplacementMapLoadedAt = 0L;
     private volatile Map<String, CacheReplacementTarget> mCacheReplacementMap = Collections.emptyMap();
 
@@ -114,12 +117,6 @@ final class ImageCacheHookRegistrar {
                     CacheReplacementTarget replacementTarget = resolveCacheReplacementTarget(chain.getArg(0));
                     if (replacementTarget != null) {
                         File pinnedFile = ensureDiskCacheEntryReplaced(chain.getThisObject(), chain.getArg(0), replacementTarget);
-                        mModule.log(Log.INFO, TAG, "Glide disk cache pinned file hit: key="
-                                + chain.getArg(0)
-                                + " remoteUrl="
-                                + replacementTarget.remoteUrl
-                                + " file="
-                                + pinnedFile.getAbsolutePath());
                         return pinnedFile;
                     }
                     return chain.proceed();
@@ -134,12 +131,6 @@ final class ImageCacheHookRegistrar {
                     CacheReplacementTarget replacementTarget = resolveCacheReplacementTarget(chain.getArg(0));
                     if (replacementTarget != null) {
                         ensureDiskCacheEntryReplaced(chain.getThisObject(), chain.getArg(0), replacementTarget);
-                        mModule.log(Log.INFO, TAG, "Glide disk cache write skipped: key="
-                                + chain.getArg(0)
-                                + " remoteUrl="
-                                + replacementTarget.remoteUrl
-                                + " asset="
-                                + replacementTarget.assetUri);
                         return null;
                     }
                     return chain.proceed();
@@ -228,17 +219,40 @@ final class ImageCacheHookRegistrar {
             mModule.log(Log.WARN, TAG, "Unable to resolve disk cache safe key for key=" + diskCacheKey);
             return mirrorFile;
         }
-        File cacheFile = overwriteDiskCacheFile(diskCacheWrapper, safeKey, mirrorFile);
-        synchronized (mProtectedSafeKeyMap) {
-            mProtectedSafeKeyMap.put(safeKey, replacementTarget);
+        // Serialize concurrent replace operations against the same safeKey so that one thread
+        // never observes another thread's half-written .tmp dirty file. Glide is multi-threaded
+        // and both the get/put hooks may race against each other for the same key.
+        Object lock = mSafeKeyWriteLocks.computeIfAbsent(safeKey, key -> new Object());
+        synchronized (lock) {
+            File committedFile = resolveCommittedCacheFile(diskCacheWrapper, safeKey);
+            long now = System.currentTimeMillis();
+            Long lastReplacedAt = mLastReplacementTimestampMap.get(safeKey);
+            // Skip rewrite if the committed file is already present, has the right size, and we
+            // wrote it recently. This breaks the put -> get -> put cascade visible in logs where
+            // the same safeKey was rewritten 5+ times within ~0.5 s.
+            if (committedFile != null
+                    && committedFile.exists()
+                    && committedFile.length() == mirrorFile.length()
+                    && lastReplacedAt != null
+                    && now - lastReplacedAt < 30_000L) {
+                synchronized (mProtectedSafeKeyMap) {
+                    mProtectedSafeKeyMap.put(safeKey, replacementTarget);
+                }
+                return committedFile;
+            }
+            File cacheFile = overwriteDiskCacheFile(diskCacheWrapper, safeKey, mirrorFile);
+            synchronized (mProtectedSafeKeyMap) {
+                mProtectedSafeKeyMap.put(safeKey, replacementTarget);
+            }
+            mLastReplacementTimestampMap.put(safeKey, System.currentTimeMillis());
+            mModule.log(Log.INFO, TAG, "Glide disk cache file replaced: safeKey="
+                    + safeKey
+                    + " remoteUrl="
+                    + replacementTarget.remoteUrl
+                    + " file="
+                    + (cacheFile != null ? cacheFile.getAbsolutePath() : "null"));
+            return cacheFile != null ? cacheFile : mirrorFile;
         }
-        mModule.log(Log.INFO, TAG, "Glide disk cache file replaced: safeKey="
-                + safeKey
-                + " remoteUrl="
-                + replacementTarget.remoteUrl
-                + " file="
-                + (cacheFile != null ? cacheFile.getAbsolutePath() : "null"));
-        return cacheFile != null ? cacheFile : mirrorFile;
     }
 
     private boolean isProtectedSafeKey(@NonNull String safeKey) {
@@ -301,14 +315,14 @@ final class ImageCacheHookRegistrar {
             } else if (directFile != null) {
                 copyFile(sourceFile, directFile);
             }
-            File snapshotFile = getDiskCacheSnapshotFile(backend, safeKey);
-            if (snapshotFile != null) {
-                return snapshotFile;
-            }
         } else if (directFile != null) {
             copyFile(sourceFile, directFile);
         }
-        return directFile;
+        // After commit (or direct write) the only file Glide must ever observe is the canonical
+        // ".0" entry. Returning the dirty ".tmp" file is unsafe because DiskLruCache renames it
+        // away during commit, so other threads decoding from the returned File may hit a missing
+        // / partial file and trigger a re-fetch (visible in logs as cascading replacements).
+        return resolveCommittedCacheFile(diskCacheWrapper, safeKey, backend, directFile);
     }
 
     private Object resolveDiskCacheBackend(@NonNull Object diskCacheWrapper) throws Throwable {
@@ -462,6 +476,52 @@ final class ImageCacheHookRegistrar {
             }
             outputStream.flush();
         }
+    }
+
+    /**
+     * Resolves the canonical committed cache file (`safeKey + ".0"`) without ever returning a
+     * dirty `.tmp` editor file. Falls back to {@link #resolveDiskCacheDataFile} for legacy
+     * Glide builds where the snapshot getter is not exposed.
+     */
+    private File resolveCommittedCacheFile(@NonNull Object diskCacheWrapper, @NonNull String safeKey) throws Throwable {
+        Object backend = resolveDiskCacheBackend(diskCacheWrapper);
+        File directFile = resolveDiskCacheDataFile(diskCacheWrapper, safeKey);
+        return resolveCommittedCacheFile(diskCacheWrapper, safeKey, backend, directFile);
+    }
+
+    private File resolveCommittedCacheFile(
+            @NonNull Object diskCacheWrapper,
+            @NonNull String safeKey,
+            Object backend,
+            File directFile
+    ) throws Throwable {
+        if (backend != null) {
+            try {
+                File snapshotFile = getDiskCacheSnapshotFile(backend, safeKey);
+                if (snapshotFile != null && snapshotFile.exists()) {
+                    return snapshotFile;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        if (directFile != null && directFile.exists()) {
+            return directFile;
+        }
+        return directFile;
+    }
+
+    /**
+     * Exposes the current replacement map to other hook registrars (e.g. memory cache) without
+     * forcing them to plumb a {@link Context} themselves. Returns the cached map (possibly
+     * empty) when no host context is yet available so that hot-path callers stay non-blocking.
+     */
+    @NonNull
+    Map<String, CacheReplacementTarget> snapshotReplacementMap() {
+        Context context = HookProcessContext.INSTANCE.resolve();
+        if (context == null) {
+            return mCacheReplacementMap;
+        }
+        return getCacheReplacementMap(context);
     }
 
     private Map<String, CacheReplacementTarget> getCacheReplacementMap(@NonNull Context context) {
