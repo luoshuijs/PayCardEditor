@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Fetch enough history so `git rev-parse --short=7 HEAD` resolves
           # the actual commit being built rather than the synthetic merge SHA
@@ -61,13 +61,13 @@ jobs:
           fi
 
       - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
         with:
           # Cache wrapper downloads + ~/.gradle/caches across runs.
           cache-read-only: ${{ github.event_name == 'pull_request' }}
@@ -142,7 +142,7 @@ jobs:
           "$apksigner" verify --print-certs "${{ steps.apk.outputs.path }}"
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.apk.outputs.name }}
           path: ${{ steps.apk.outputs.path }}
@@ -153,7 +153,7 @@ jobs:
         # Only publish a Release on tag pushes -- workflow_dispatch builds
         # remain artifact-only so they don't clutter the Releases page.
         if: startsWith(github.ref, 'refs/tags/v') && steps.meta.outputs.build_type == 'release'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ steps.apk.outputs.path }}
           generate_release_notes: true
