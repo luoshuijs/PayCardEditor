@@ -1,0 +1,161 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sign_release:
+        description: 'Build a signed release APK (requires KEYSTORE_* secrets)'
+        type: boolean
+        default: true
+
+# Cancel in-progress runs of the same workflow on the same ref to save minutes.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write  # needed by softprops/action-gh-release on tag pushes
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    env:
+      # AGP 9.1 requires JDK 17+, the project compiles with Java 21.
+      JAVA_VERSION: '21'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Fetch enough history so `git rev-parse --short=7 HEAD` resolves
+          # the actual commit being built rather than the synthetic merge SHA
+          # GitHub creates for pull_request events.
+          fetch-depth: 0
+
+      - name: Resolve build metadata
+        id: meta
+        shell: bash
+        run: |
+          # On pull_request events GITHUB_SHA points at a merge commit; prefer
+          # the head SHA so the artifact name matches what the contributor sees.
+          sha="${{ github.event.pull_request.head.sha || github.sha }}"
+          short="${sha:0:7}"
+          echo "short_sha=$short" >> "$GITHUB_OUTPUT"
+
+          # Decide which build type to produce.
+          # - tag push (refs/tags/v*) or workflow_dispatch w/ sign_release -> release
+          # - everything else -> debug
+          ref="${GITHUB_REF}"
+          if [[ "$ref" == refs/tags/v* ]] || \
+             ([[ "${{ github.event_name }}" == "workflow_dispatch" ]] && \
+              [[ "${{ github.event.inputs.sign_release }}" == "true" ]]); then
+            echo "build_type=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "build_type=debug" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          # Cache wrapper downloads + ~/.gradle/caches across runs.
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Decode keystore
+        # Only run for release builds. Forks lack secrets, so we also skip
+        # when KEYSTORE_BASE64 is empty -- the build then falls through to
+        # an unsigned release APK and the workflow fails fast with a clear msg.
+        if: steps.meta.outputs.build_type == 'release'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        shell: bash
+        run: |
+          if [[ -z "$KEYSTORE_BASE64" ]]; then
+            echo "::error::KEYSTORE_BASE64 secret is not set; cannot build a signed release."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/signing"
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/signing/release.jks"
+          cat > keystore.properties <<EOF
+          storeFile=$RUNNER_TEMP/signing/release.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - name: Assemble ${{ steps.meta.outputs.build_type }}
+        env:
+          # Gradle reads this in app/build.gradle.kts to embed the short hash
+          # into the output filename. Defined here so it works even if `git`
+          # in the runner image happens to be missing.
+          GIT_SHORT_SHA: ${{ steps.meta.outputs.short_sha }}
+        run: |
+          if [ "${{ steps.meta.outputs.build_type }}" = "release" ]; then
+            ./gradlew :app:assembleRelease --no-daemon --stacktrace
+          else
+            ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          fi
+
+      - name: Locate APK
+        id: apk
+        shell: bash
+        run: |
+          # The custom CopyAndRenameApk task in app/build.gradle.kts emits a
+          # renamed copy at outputs/renamed-apk/<buildType>/...apk. Prefer
+          # that; fall back to the AGP default location for safety.
+          renamed_dir="app/build/outputs/renamed-apk/${{ steps.meta.outputs.build_type }}"
+          default_dir="app/build/outputs/apk/${{ steps.meta.outputs.build_type }}"
+          file=$(find "$renamed_dir" -maxdepth 1 -name '*.apk' 2>/dev/null | head -n1)
+          if [[ -z "$file" ]]; then
+            file=$(find "$default_dir" -maxdepth 1 -name '*.apk' 2>/dev/null | head -n1)
+          fi
+          if [[ -z "$file" ]]; then
+            echo "::error::No APK produced under $renamed_dir or $default_dir"
+            ls -R app/build/outputs || true
+            exit 1
+          fi
+          echo "path=$file" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$file")" >> "$GITHUB_OUTPUT"
+          echo "Built: $file"
+
+      - name: Verify signature (release only)
+        if: steps.meta.outputs.build_type == 'release'
+        shell: bash
+        run: |
+          # apksigner ships in the build-tools used by AGP. Pick the newest one
+          # available in the runner's Android SDK install.
+          apksigner=$(find "$ANDROID_SDK_ROOT/build-tools" -name apksigner | sort -V | tail -n1)
+          "$apksigner" verify --print-certs "${{ steps.apk.outputs.path }}"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.name }}
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        # Only publish a Release on tag pushes -- workflow_dispatch builds
+        # remain artifact-only so they don't clutter the Releases page.
+        if: startsWith(github.ref, 'refs/tags/v') && steps.meta.outputs.build_type == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.apk.outputs.path }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
