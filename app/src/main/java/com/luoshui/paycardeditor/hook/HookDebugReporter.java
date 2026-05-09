@@ -1,12 +1,11 @@
 package com.luoshui.paycardeditor.hook;
 
-import android.content.Context;
 import android.os.Build;
 import android.os.Process;
 
 import androidx.annotation.NonNull;
 
-import com.luoshui.paycardeditor.core.HookEnvironment;
+import com.luoshui.paycardeditor.BuildConfig;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -31,6 +30,11 @@ final class HookDebugReporter {
         mSupport = support;
     }
 
+    /**
+     * Publishes the troubleshoot snapshot. Every input is either constant for the host or
+     * derivable without a {@link android.content.Context}, so a single call at install time
+     * is enough — no host-Application-attach barrier to wait on.
+     */
     void publishTroubleshootState(
             @NonNull String apkPath,
             @NonNull Class<?> cardInfoClass,
@@ -49,9 +53,6 @@ final class HookDebugReporter {
 
     @NonNull
     private String buildDebugStatus(@NonNull String apkPath) {
-        Context context = HookProcessContext.INSTANCE.resolve();
-        String dataDir = context != null && context.getDataDir() != null ? context.getDataDir().getAbsolutePath() : "null";
-        String moduleVersion = resolveModuleVersion(context);
         StringBuilder builder = new StringBuilder();
         builder.append("PID: ").append(Process.myPid())
                 .append(", UID: ").append(Process.myUid())
@@ -59,12 +60,12 @@ final class HookDebugReporter {
                 .append('\n');
         builder.append("Xposed API version: ").append(mModule.getApiVersion()).append('\n');
         builder.append("module: ").append(apkPath).append('\n');
-        builder.append("ctx.dataDir: ").append(dataDir).append('\n');
         builder.append(mModule.getClass().getName())
                 .append(' ')
-                .append(moduleVersion)
-                .append('\n');
-        builder.append("XposedBridge: ").append(resolveXposedRuntimeClassName()).append('\n');
+                .append(BuildConfig.VERSION_NAME)
+                .append(" (")
+                .append(BuildConfig.VERSION_CODE)
+                .append(")\n");
         builder.append(mModule.getFrameworkName())
                 .append(' ')
                 .append(mModule.getFrameworkVersion())
@@ -153,35 +154,6 @@ final class HookDebugReporter {
             return "x86";
         }
         return rawAbi;
-    }
-
-    @NonNull
-    private String resolveXposedRuntimeClassName() {
-        String[] candidates = new String[]{
-                "de.robv.android.xposed.XposedBridge",
-                "io.github.libxposed.api.XposedInterface"
-        };
-        for (String candidate : candidates) {
-            try {
-                Class<?> runtimeClass = Class.forName(candidate, false, mModule.getClass().getClassLoader());
-                return runtimeClass.getName();
-            } catch (Throwable ignored) {
-            }
-        }
-        return "null";
-    }
-
-    @NonNull
-    private String resolveModuleVersion(Context context) {
-        if (context == null) {
-            return "unknown (0)";
-        }
-        try {
-            var packageInfo = context.getPackageManager().getPackageInfo(HookEnvironment.MODULE_PACKAGE, 0);
-            return packageInfo.versionName + " (" + packageInfo.getLongVersionCode() + ')';
-        } catch (Throwable ignored) {
-            return "unknown (0)";
-        }
     }
 
     private Class<?> resolveDeclaringClass(Method method) {
