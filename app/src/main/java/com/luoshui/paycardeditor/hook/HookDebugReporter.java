@@ -113,7 +113,9 @@ final class HookDebugReporter {
         for (int index = 0; index < candidates.size(); index++) {
             HookCandidate candidate = candidates.get(index);
             if (index > 0) {
-                builder.append("\n");
+                // Blank line between blocks; TroubleshootFragment.buildHookMethodSpans splits
+                // on "\n\n" to color each entry independently.
+                builder.append("\n\n");
             }
             builder.append('[')
                     .append(index + 1)
