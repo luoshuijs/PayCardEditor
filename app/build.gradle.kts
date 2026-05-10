@@ -3,6 +3,7 @@ import java.io.File
 import java.io.FileInputStream
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.BuiltArtifactsLoader
+import com.android.build.api.variant.impl.VariantOutputImpl
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
@@ -68,6 +69,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
+            //noinspection ChromeOsAbiSupport
             abiFilters += "arm64-v8a"
         }
     }
@@ -92,11 +94,7 @@ android {
             if (signingConfigs.findByName("release") != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            optimization.enable = true
         }
     }
     compileOptions {
@@ -117,75 +115,14 @@ android {
     }
 }
 
-// ---------------------------------------------------------------------------
-// APK renaming
-//
-// AGP 9 removed the legacy `applicationVariants[].outputs[].outputFileName`
-// hook. The blessed replacement is the Artifacts API: we listen to the APK
-// artifact and copy it into a sibling directory with the desired name. The
-// pattern follows the official `listenToArtifacts` recipe in
-// android/gradle-recipes (agp-9.0 branch).
-//
-// Output layout:
-//   app/build/outputs/apk/<buildType>/                       <- AGP default APK
-//   app/build/outputs/renamed-apk/<buildType>/<finalName>.apk <- copied + renamed
-//
-// `finalName` = {rootProject.name}-{versionName}-{shortHash?}-{buildType}.apk
-// ---------------------------------------------------------------------------
-abstract class CopyAndRenameApk : DefaultTask() {
-    @get:InputDirectory
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val input: DirectoryProperty
-
-    @get:OutputDirectory
-    abstract val output: DirectoryProperty
-
-    @get:Internal
-    abstract val builtArtifactsLoader: Property<BuiltArtifactsLoader>
-
-    @get:Input
-    abstract val projectName: Property<String>
-
-    @get:Input
-    @get:Optional
-    abstract val shortHash: Property<String>
-
-    @TaskAction
-    fun run() {
-        val outDir = output.get().asFile
-        outDir.deleteRecursively()
-        outDir.mkdirs()
-
-        val builtArtifacts = builtArtifactsLoader.get().load(input.get())
-            ?: error("Cannot load APK artifacts from ${input.get().asFile}")
-
-        builtArtifacts.elements.forEach { artifact ->
-            val versionName = artifact.versionName?.takeUnless { it.isNullOrBlank() } ?: "0.0"
-            val hashSegment = shortHash.orNull?.takeIf { it.isNotBlank() }?.let { "-$it" }.orEmpty()
-            val finalName = "${projectName.get()}-$versionName$hashSegment-${builtArtifacts.variantName}.apk"
-            val src = File(artifact.outputFile)
-            val dst = File(outDir, finalName)
-            src.copyTo(dst, overwrite = true)
-            logger.lifecycle("Copied APK -> ${dst.absolutePath}")
-        }
-    }
-}
-
 androidComponents {
     onVariants { variant ->
-        val renameTask = tasks.register<CopyAndRenameApk>("copyAndRenameApkFor${variant.name.replaceFirstChar { it.titlecase() }}") {
-            output.set(layout.buildDirectory.dir("outputs/renamed-apk/${variant.name}"))
-            builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
-            projectName.set(rootProject.name)
-            shortHash.set(gitShortHash)
-        }
+        variant.outputs.forEach {
+            val apkName =
+                "${rootProject.name}-${android.defaultConfig.versionName}-${resolveGitShortHash()}-${variant.buildType}.apk"
 
-        // toListenTo wires the task to fire every time AGP packages the APK
-        // without taking ownership of the artifact, so the standard
-        // assembleDebug / assembleRelease user flow still works.
-        variant.artifacts.use(renameTask)
-            .wiredWith { it.input }
-            .toListenTo(SingleArtifact.APK)
+            (it as VariantOutputImpl).outputFileName = apkName
+        }
     }
 }
 
@@ -196,6 +133,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.recyclerview)
     implementation(libs.ucrop)
+    implementation(libs.okhttp)
     implementation(libs.glide)
     implementation(libs.dexkit)
     compileOnly(libs.libxposed.api)
