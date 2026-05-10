@@ -1,20 +1,5 @@
 import java.util.Properties
-import java.io.File
 import java.io.FileInputStream
-import com.android.build.api.artifact.SingleArtifact
-import com.android.build.api.variant.BuiltArtifactsLoader
-import com.android.build.api.variant.impl.VariantOutputImpl
-import org.gradle.api.DefaultTask
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.TaskAction
 
 plugins {
     alias(libs.plugins.android.application)
@@ -25,7 +10,7 @@ fun getKeystoreProperties(): Properties? {
     val keystoreProperties = Properties()
     if (keystorePropertiesFile.exists()) {
         keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-        return keystoreProperties;
+        return keystoreProperties
     }
     return null
 }
@@ -49,7 +34,10 @@ fun resolveGitShortHash(): String? {
     }.getOrNull()
 }
 
-val gitShortHash: String? = resolveGitShortHash()
+// Resolved once at configuration time so every variant reuses the same value
+// (avoids forking `git` per variant) and gives a stable fallback when git is
+// not available.
+val gitShortHash: String = resolveGitShortHash()?.takeIf { it.isNotBlank() } ?: "nogit"
 
 android {
     namespace = "com.luoshui.paycardeditor"
@@ -69,13 +57,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
+            // The module is an Xposed hook bundle for Mi Wallet, which never
+            // runs on ChromeOS, so the single-ABI restriction is intentional.
             //noinspection ChromeOsAbiSupport
             abiFilters += "arm64-v8a"
         }
     }
 
     signingConfigs {
-        val keystoreProperties = getKeystoreProperties();
+        val keystoreProperties = getKeystoreProperties()
         if (keystoreProperties != null) {
             create("release") {
                 storeFile = file(keystoreProperties["storeFile"] as String)
@@ -94,6 +84,9 @@ android {
             if (signingConfigs.findByName("release") != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
+            // AGP 9 R8: enabling `optimization` implicitly turns on minify
+            // (shrink + obfuscate + optimize). Verified via `:app:minifyReleaseWithR8`
+            // running on assembleRelease and apkanalyzer showing obfuscated symbols.
             optimization.enable = true
         }
     }
@@ -117,11 +110,13 @@ android {
 
 androidComponents {
     onVariants { variant ->
-        variant.outputs.forEach {
+        variant.outputs.forEach { output ->
             val apkName =
-                "${rootProject.name}-${android.defaultConfig.versionName}-${resolveGitShortHash()}-${variant.buildType}.apk"
-
-            (it as VariantOutputImpl).outputFileName = apkName
+                "${rootProject.name}-${android.defaultConfig.versionName}-$gitShortHash-${variant.buildType}.apk"
+            // `outputFileName` is part of the stable `VariantOutput` API (since
+            // AGP 7.0) — no need to cast to `VariantOutputImpl` from the
+            // `com.android.build.api.variant.impl` internal package.
+            output.outputFileName = apkName
         }
     }
 }
@@ -133,6 +128,9 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.recyclerview)
     implementation(libs.ucrop)
+    // Override the OkHttp 3.12.13 brought in transitively by uCrop with a
+    // maintained 5.x release. R8 tree-shakes the unused parts so the on-disk
+    // cost is negligible (verified: 195 bytes of okhttp3 in dex).
     implementation(libs.okhttp)
     implementation(libs.glide)
     implementation(libs.dexkit)
