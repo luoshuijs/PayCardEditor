@@ -1,5 +1,5 @@
 # Add project specific R8 rules here.
-# AGP will combine all keep rule files in src/main/keepRules to pass to R8
+# AGP will combine all keep rule files in src/main/keepRules to pass to R8.
 #
 # For more details, see
 #   https://d.android.com/r/tools/r8/keep-rules
@@ -10,6 +10,7 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
 # --- Xposed ---
 -adaptresourcefilecontents META-INF/xposed/java_init.list
 
@@ -25,6 +26,7 @@
     public *** intercept(...);
 }
 
+# Third-party libs that resolve members reflectively at runtime.
 -keep class org.luckypray.dexkit.** { *; }
 -keep class org.lsposed.** { *; }
 -keep class com.yalantis.ucrop.** { *; }
