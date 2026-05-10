@@ -2,10 +2,10 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     tags: ['v*']
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
     inputs:
       sign_release:
@@ -32,7 +32,7 @@ jobs:
     # environment but do not consume the secrets, so the binding is safe.
     environment: Build
     env:
-      # AGP 9.1 requires JDK 17+, the project compiles with Java 21.
+      # AGP 9.2 requires JDK 17+, the project compiles with Java 21.
       JAVA_VERSION: '21'
 
     steps:
@@ -120,17 +120,14 @@ jobs:
         id: apk
         shell: bash
         run: |
-          # The custom CopyAndRenameApk task in app/build.gradle.kts emits a
-          # renamed copy at outputs/renamed-apk/<buildType>/...apk. Prefer
-          # that; fall back to the AGP default location for safety.
-          renamed_dir="app/build/outputs/renamed-apk/${{ steps.meta.outputs.build_type }}"
-          default_dir="app/build/outputs/apk/${{ steps.meta.outputs.build_type }}"
-          file=$(find "$renamed_dir" -maxdepth 1 -name '*.apk' 2>/dev/null | head -n1)
+          # AGP writes the APK under app/build/outputs/apk/<buildType>/. The
+          # filename comes from `output.outputFileName` set in app/build.gradle.kts
+          # (PayCardEditor-<version>-<sha>-<buildType>.apk), but we glob to stay
+          # robust against future renames.
+          apk_dir="app/build/outputs/apk/${{ steps.meta.outputs.build_type }}"
+          file=$(find "$apk_dir" -maxdepth 1 -name '*.apk' 2>/dev/null | head -n1)
           if [[ -z "$file" ]]; then
-            file=$(find "$default_dir" -maxdepth 1 -name '*.apk' 2>/dev/null | head -n1)
-          fi
-          if [[ -z "$file" ]]; then
-            echo "::error::No APK produced under $renamed_dir or $default_dir"
+            echo "::error::No APK produced under $apk_dir"
             ls -R app/build/outputs || true
             exit 1
           fi
