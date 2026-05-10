@@ -354,9 +354,9 @@ internal object DexKitMethodLocator {
         // of either disk-cache method so we still expose a usable Class<?> handle even when
         // the class-level matcher narrows differently across APK versions.
         val diskCacheWrapperClassData = diskCacheWrapperClasses.singleOrNull()
-        val diskCacheWrapperDescriptor = diskCacheWrapperClassData?.toDexType()?.serialize()
-            ?: diskCacheGet?.declaredClass?.toDexType()?.serialize()
-            ?: diskCachePut?.declaredClass?.toDexType()?.serialize()
+        val diskCacheWrapperDescriptor = diskCacheWrapperClassData?.toDexClass()?.serialize()
+            ?: diskCacheGet?.declaredClass?.toDexClass()?.serialize()
+            ?: diskCachePut?.declaredClass?.toDexClass()?.serialize()
         return GlideDescriptors(
             tokenGenerate = tokenGenerate?.toDexMethod()?.serialize(),
             diskCacheWrapperClass = diskCacheWrapperDescriptor,
