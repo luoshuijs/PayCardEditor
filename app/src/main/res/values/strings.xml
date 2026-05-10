@@ -10,7 +10,6 @@
     <string name="home_action_sync">同步快照</string>
     <string name="home_action_open_mipay">打开 MiPay</string>
     <string name="home_action_troubleshoot">故障排查</string>
-    <string name="refresh_state">刷新状态</string>
     <string name="snapshot_count_format">%1$d 张卡片</string>
     <string name="last_updated_format">最近同步: %1$s</string>
     <string name="last_source_format">最近来源: %1$s</string>
@@ -52,7 +51,6 @@
     <string name="rule_default_short">系统默认</string>
 
     <string name="preview_section_eyebrow">Hook Preview</string>
-    <string name="preview_refresh">刷新列表</string>
     <string name="preview_count_format">当前已捕获 %1$d 张卡面</string>
     <string name="preview_empty_title">还没有可预览的卡面</string>
     <string name="preview_empty_message">先在框架里启用模块并打开一次小米钱包卡片页，等 Hook 抓到快照后，这里就会显示卡面列表。</string>

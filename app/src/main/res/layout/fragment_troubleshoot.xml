@@ -14,19 +14,10 @@
         android:paddingEnd="20dp"
         android:paddingBottom="28dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_refresh"
-            style="?attr/materialButtonTonalStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/refresh_state"
-            app:icon="@drawable/ic_sync" />
-
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.PayCardEditor.Card"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:layout_width="match_parent"

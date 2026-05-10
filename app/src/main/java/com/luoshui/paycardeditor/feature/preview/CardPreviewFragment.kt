@@ -32,7 +32,6 @@ class CardPreviewFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.recyclerPreview.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerPreview.adapter = adapter
-        binding.buttonRefreshPreview.setOnClickListener { refreshCards() }
         refreshCards()
     }
 

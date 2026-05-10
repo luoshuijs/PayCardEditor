@@ -30,7 +30,6 @@ class TroubleshootFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.buttonRefresh.setOnClickListener { renderState() }
         binding.buttonCopyDebug.setOnClickListener {
             copyText(getString(R.string.troubleshoot_debug_title), binding.textDebugInfo.text)
         }

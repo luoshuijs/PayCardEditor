@@ -58,15 +58,6 @@
                         android:visibility="gone"
                         tools:text="模块已经接入 libxposed，但还没有收到卡片快照。"
                         tools:visibility="visible" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/button_refresh_preview"
-                        style="?attr/materialButtonTonalStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="@string/preview_refresh"
-                        app:icon="@drawable/ic_sync" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
