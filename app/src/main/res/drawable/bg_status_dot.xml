@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Status indicator dot. Color is set at runtime via backgroundTintList in
+  HomeFragment, so we leave the solid color as @android:color/white (it will
+  always be tinted).
+-->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="@color/tone_amber" />
+    <solid android:color="@android:color/white" />
 </shape>

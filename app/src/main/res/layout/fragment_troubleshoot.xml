@@ -16,21 +16,17 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_refresh"
-            style="?attr/materialButtonOutlinedStyle"
+            style="?attr/materialButtonTonalStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/refresh_state"
-            app:icon="@android:drawable/ic_popup_sync" />
+            app:icon="@drawable/ic_sync" />
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.PayCardEditor.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/surface_card"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/outline_soft"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -42,17 +38,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/troubleshoot_debug_title"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.PayCardEditor.Eyebrow" />
 
                 <TextView
                     android:id="@+id/text_updated_at"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
                 <TextView
                     android:id="@+id/text_debug_info"
@@ -61,7 +55,7 @@
                     android:layout_marginTop="12dp"
                     android:fontFamily="monospace"
                     android:lineSpacingExtra="3dp"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textIsSelectable="true"
                     android:textSize="13sp" />
 
@@ -72,19 +66,15 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="@string/troubleshoot_copy_action"
-                    app:icon="@android:drawable/ic_menu_save" />
+                    app:icon="@drawable/ic_content_copy" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.PayCardEditor.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/surface_card"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/outline_soft"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -96,9 +86,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/troubleshoot_hook_list_title"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.PayCardEditor.Eyebrow" />
 
                 <TextView
                     android:id="@+id/text_hook_methods"
@@ -107,7 +95,7 @@
                     android:layout_marginTop="12dp"
                     android:fontFamily="monospace"
                     android:lineSpacingExtra="3dp"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textIsSelectable="true"
                     android:textSize="13sp" />
 
@@ -118,7 +106,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="@string/troubleshoot_copy_action"
-                    app:icon="@android:drawable/ic_menu_save" />
+                    app:icon="@drawable/ic_content_copy" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>

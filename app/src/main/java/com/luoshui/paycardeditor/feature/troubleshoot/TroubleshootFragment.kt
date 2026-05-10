@@ -14,8 +14,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.android.material.color.MaterialColors
 import com.luoshui.paycardeditor.databinding.FragmentTroubleshootBinding
 
 class TroubleshootFragment : Fragment() {
@@ -59,9 +59,11 @@ class TroubleshootFragment : Fragment() {
         if (text.isBlank()) {
             return text
         }
-        val resolvedColor = ContextCompat.getColor(requireContext(), R.color.tone_jade)
-        val missingColor = ContextCompat.getColor(requireContext(), R.color.tone_coral)
-        val secondaryColor = ContextCompat.getColor(requireContext(), R.color.text_secondary)
+        // Resolve colors from the theme so dynamic color and dark mode work.
+        val anchor = binding.textHookMethods
+        val resolvedColor = MaterialColors.getColor(anchor, androidx.appcompat.R.attr.colorPrimary)
+        val missingColor = MaterialColors.getColor(anchor, androidx.appcompat.R.attr.colorError)
+        val secondaryColor = MaterialColors.getColor(anchor, com.google.android.material.R.attr.colorOnSurfaceVariant)
         val builder = SpannableStringBuilder()
         val blocks = text.split("\n\n")
         blocks.forEachIndexed { blockIndex, block ->

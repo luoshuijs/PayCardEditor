@@ -4,11 +4,10 @@ import com.luoshui.paycardeditor.R
 
 
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.commit
 import com.luoshui.paycardeditor.databinding.ActivityTroubleshootBinding
 
 class TroubleshootActivity : AppCompatActivity() {
@@ -16,9 +15,10 @@ class TroubleshootActivity : AppCompatActivity() {
     private lateinit var binding: ActivityTroubleshootBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Modern edge-to-edge — system bars stay transparent and the icon
+        // appearance follows ?attr/isLightTheme.
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         binding = ActivityTroubleshootBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -30,9 +30,9 @@ class TroubleshootActivity : AppCompatActivity() {
         setupWindowInsets()
 
         if (savedInstanceState == null) {
-            supportFragmentManager.commit {
-                replace(R.id.troubleshoot_fragment_container, TroubleshootFragment())
-            }
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.troubleshoot_fragment_container, TroubleshootFragment())
+                .commit()
         }
     }
 

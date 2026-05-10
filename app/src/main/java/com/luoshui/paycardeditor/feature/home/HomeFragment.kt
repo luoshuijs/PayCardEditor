@@ -15,9 +15,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import com.google.android.material.color.MaterialColors
 import com.luoshui.paycardeditor.databinding.FragmentHomeBinding
 import io.github.libxposed.service.XposedService
 
@@ -83,20 +83,43 @@ class HomeFragment : Fragment(), App.ServiceStateListener {
         binding.textWarning.text = state.cardState.warning
     }
 
+    /**
+     * Maps the module status level to a pair of M3 theme attributes:
+     *  ACTIVE   → primary  / primary-container
+     *  WAITING  → secondary / secondary-container
+     *  INACTIVE → error    / error-container
+     *
+     * Reading the colors via [MaterialColors.getColor] keeps everything in
+     * sync with dynamic color and dark mode.
+     */
     private fun renderModuleStatus(status: ModuleStatusState) {
         binding.textActivationTitle.text = status.title
         binding.textActivationDetail.text = status.detail
-        val (indicator, container, stroke) = when (status.level) {
-            ModuleStatusLevel.ACTIVE -> Triple(R.color.tone_jade, R.color.tone_jade_soft, R.color.tone_jade)
-            ModuleStatusLevel.WAITING -> Triple(R.color.tone_amber, R.color.tone_amber_soft, R.color.tone_amber)
-            ModuleStatusLevel.INACTIVE -> Triple(R.color.tone_coral, R.color.tone_coral_soft, R.color.tone_coral)
-        }
-        binding.viewActivationIndicator.backgroundTintList = ColorStateList.valueOf(color(indicator))
-        binding.cardActivation.setCardBackgroundColor(color(container))
-        binding.cardActivation.strokeColor = color(stroke)
-    }
 
-    private fun color(colorRes: Int): Int = ContextCompat.getColor(requireContext(), colorRes)
+        val card = binding.cardActivation
+        val accentAttr: Int
+        val containerAttr: Int
+        when (status.level) {
+            ModuleStatusLevel.ACTIVE -> {
+                accentAttr = androidx.appcompat.R.attr.colorPrimary
+                containerAttr = com.google.android.material.R.attr.colorPrimaryContainer
+            }
+            ModuleStatusLevel.WAITING -> {
+                accentAttr = com.google.android.material.R.attr.colorSecondary
+                containerAttr = com.google.android.material.R.attr.colorSecondaryContainer
+            }
+            ModuleStatusLevel.INACTIVE -> {
+                accentAttr = androidx.appcompat.R.attr.colorError
+                containerAttr = com.google.android.material.R.attr.colorErrorContainer
+            }
+        }
+        val accent = MaterialColors.getColor(card, accentAttr)
+        val container = MaterialColors.getColor(card, containerAttr)
+
+        binding.viewActivationIndicator.backgroundTintList = ColorStateList.valueOf(accent)
+        card.setCardBackgroundColor(container)
+        card.strokeColor = accent
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

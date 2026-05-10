@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Centralized shape + Card styles. All cards in the app should use
+      Widget.PayCardEditor.Card so corner radius and stroke stay in sync.
+    -->
+
+    <style name="ShapeAppearance.PayCardEditor.LargeCard" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
+        <item name="cornerSize">28dp</item>
+        <item name="cornerFamily">rounded</item>
+    </style>
+
+    <!--
+      Outlined card with no elevation, ?colorOutlineVariant stroke and
+      ?colorSurface fill. Matches the original 28dp visual but is now
+      driven entirely by theme attributes.
+    -->
+    <style name="Widget.PayCardEditor.Card" parent="Widget.Material3.CardView.Outlined">
+        <item name="cardCornerRadius">28dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainerLow</item>
+        <item name="strokeColor">?attr/colorOutlineVariant</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.PayCardEditor.LargeCard</item>
+    </style>
+
+    <!--
+      Empty-state hint panel. Replaces the legacy bg_hint_panel drawable and
+      uses tonal secondary container so the panel adapts to dark mode.
+    -->
+    <style name="Widget.PayCardEditor.HintPanel" parent="Widget.Material3.CardView.Filled">
+        <item name="cardCornerRadius">28dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">?attr/colorSecondaryContainer</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.PayCardEditor.LargeCard</item>
+    </style>
+</resources>

@@ -1,17 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Material 3 base theme.
+      All M3 color-scheme roles are wired explicitly so components don't fall
+      back to the baseline palette when only a few seeds are overridden.
+    -->
     <style name="Base.Theme.PayCardEditor" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/tone_jade</item>
-        <item name="colorSecondary">@color/tone_amber</item>
-        <item name="colorSurface">@color/surface_card</item>
-        <item name="android:windowBackground">@color/screen_background</item>
+        <!-- Primary -->
+        <item name="colorPrimary">@color/md_primary</item>
+        <item name="colorOnPrimary">@color/md_on_primary</item>
+        <item name="colorPrimaryContainer">@color/md_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/md_on_primary_container</item>
+
+        <!-- Secondary -->
+        <item name="colorSecondary">@color/md_secondary</item>
+        <item name="colorOnSecondary">@color/md_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/md_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/md_on_secondary_container</item>
+
+        <!-- Tertiary -->
+        <item name="colorTertiary">@color/md_tertiary</item>
+        <item name="colorOnTertiary">@color/md_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/md_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/md_on_tertiary_container</item>
+
+        <!-- Error -->
+        <item name="colorError">@color/md_error</item>
+        <item name="colorOnError">@color/md_on_error</item>
+        <item name="colorErrorContainer">@color/md_error_container</item>
+        <item name="colorOnErrorContainer">@color/md_on_error_container</item>
+
+        <!-- Surface tier (M3 Expressive 5-step containers) -->
+        <item name="android:colorBackground">@color/md_background</item>
+        <item name="colorOnBackground">@color/md_on_background</item>
+        <item name="colorSurface">@color/md_surface</item>
+        <item name="colorOnSurface">@color/md_on_surface</item>
+        <item name="colorSurfaceVariant">@color/md_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/md_on_surface_variant</item>
+        <item name="colorSurfaceDim">@color/md_surface_dim</item>
+        <item name="colorSurfaceBright">@color/md_surface_bright</item>
+        <item name="colorSurfaceContainerLowest">@color/md_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/md_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/md_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/md_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/md_surface_container_highest</item>
+
+        <!-- Outline -->
+        <item name="colorOutline">@color/md_outline</item>
+        <item name="colorOutlineVariant">@color/md_outline_variant</item>
+
+        <!-- Inverse -->
+        <item name="colorSurfaceInverse">@color/md_inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/md_inverse_on_surface</item>
+        <item name="colorPrimaryInverse">@color/md_inverse_primary</item>
+
+        <!-- Window / system bars: edge-to-edge, icon appearance follows theme -->
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
+        <item name="android:windowLightNavigationBar">?attr/isLightTheme</item>
+
+        <!-- Component overrides -->
+        <item name="bottomNavigationStyle">@style/Widget.PayCardEditor.BottomNavigation</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.PayCardEditor.MaterialAlertDialog</item>
+
+        <!-- Type and shape scales -->
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.PayCardEditor.LabelSmall</item>
+        <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.PayCardEditor.LargeCard</item>
+    </style>
+
+    <style name="Theme.PayCardEditor" parent="Base.Theme.PayCardEditor" />
+
+    <!--
+      Bottom navigation: tonal surface container background, jade active
+      indicator with pill-shaped corners.
+    -->
+    <style name="Widget.PayCardEditor.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
+        <item name="android:background">?attr/colorSurfaceContainer</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.PayCardEditor.BottomNavigation.ActiveIndicator</item>
+        <item name="itemIconTint">@color/bottom_navigation_item_tint</item>
+        <item name="itemTextColor">@color/bottom_navigation_item_tint</item>
+        <item name="labelVisibilityMode">labeled</item>
     </style>
 
     <style name="Widget.PayCardEditor.BottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">@color/tone_jade_soft</item>
+        <item name="android:color">?attr/colorSecondaryContainer</item>
         <item name="shapeAppearance">@style/ShapeAppearance.PayCardEditor.BottomNavigation.ActiveIndicator</item>
     </style>
 
@@ -20,5 +95,11 @@
         <item name="cornerSize">16dp</item>
     </style>
 
-    <style name="Theme.PayCardEditor" parent="Base.Theme.PayCardEditor" />
+    <style name="ThemeOverlay.PayCardEditor.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.PayCardEditor.Dialog</item>
+    </style>
+
+    <style name="ShapeAppearance.PayCardEditor.Dialog" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
+        <item name="cornerSize">28dp</item>
+    </style>
 </resources>

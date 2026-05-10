@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="@color/tone_jade" android:state_checked="true" />
-    <item android:color="@color/text_secondary" />
+<!--
+  Bottom navigation icon/text tint. Active state uses on-secondary-container
+  (M3 navigation-bar pattern) so it pairs with the secondary-container active
+  indicator background.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:color="?attr/colorOnSecondaryContainer" android:state_checked="true" />
+    <item android:color="?attr/colorOnSurfaceVariant" />
 </selector>

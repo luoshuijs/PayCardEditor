@@ -1,29 +1,15 @@
 <resources>
     <string name="app_name">PayCardEditor</string>
-    <string name="action_settings">Settings</string>
-    <string name="first_fragment_label">概览</string>
-    <string name="second_fragment_label">详情</string>
-    <string name="next">下一页</string>
-    <string name="previous">返回</string>
-    <string name="lorem_ipsum">调试页暂未启用。</string>
 
     <string name="tab_home">主页</string>
     <string name="tab_studio">卡面制作</string>
     <string name="tab_preview">预览卡面</string>
 
-    <string name="home_hero_eyebrow">Material 3</string>
-    <string name="home_hero_title">把 Hook 到的小米钱包卡面，整理成可编辑的工作台</string>
-    <string name="home_hero_subtitle">主页保留激活检测与同步概览，同时提供打开 MiPay 的快捷入口。完成一次抓取后，就可以到“卡面制作”和“预览卡面”继续操作。</string>
     <string name="home_status_label">激活检测</string>
     <string name="home_snapshot_label">同步快照</string>
-    <string name="home_preview_label">卡面预览</string>
     <string name="home_action_sync">同步快照</string>
     <string name="home_action_open_mipay">打开 MiPay</string>
     <string name="home_action_troubleshoot">故障排查</string>
-    <string name="home_hint_label">建议验证顺序</string>
-    <string name="home_hint_steps">1. 在框架里启用模块并勾选 com.miui.tsmclient 作用域。
-2. 打开一次小米钱包卡片列表页或详情页，让 Hook 拿到 CardInfo / CardInfoManager 数据。
-3. 回到 PayCardEditor 主页查看同步快照，再前往“卡面制作”或“预览卡面”继续操作。</string>
     <string name="refresh_state">刷新状态</string>
     <string name="snapshot_count_format">%1$d 张卡片</string>
     <string name="last_updated_format">最近同步: %1$s</string>

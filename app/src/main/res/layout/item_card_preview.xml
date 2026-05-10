@@ -2,14 +2,10 @@
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.PayCardEditor.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@color/surface_card"
-    app:cardCornerRadius="28dp"
-    app:cardElevation="0dp"
-    app:strokeColor="@color/outline_soft"
-    app:strokeWidth="1dp">
+    android:layout_marginBottom="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,7 +18,7 @@
             android:id="@+id/image_preview"
             android:layout_width="112dp"
             android:layout_height="72dp"
-            android:background="@color/tone_amber_soft"
+            android:background="?attr/colorSurfaceContainerHigh"
             android:contentDescription="@null"
             android:scaleType="centerCrop" />
 
@@ -37,32 +33,34 @@
                 android:id="@+id/text_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_primary"
-                android:textSize="18sp"
-                android:textStyle="bold"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="?attr/colorOnSurface"
                 tools:text="招商银行信用卡" />
 
             <TextView
                 android:id="@+id/text_subtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/text_secondary"
-                android:textSize="14sp"
+                android:layout_marginTop="6dp"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 tools:text="bank_card · 1234" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/text_status"
+        <!--
+          Status pill is a real M3 assist chip now. Background tint flips
+          between secondary/tertiary container based on rule state, set in
+          CardPreviewAdapter.
+        -->
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_status"
+            style="@style/Widget.Material3.Chip.Assist"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingStart="12dp"
-            android:paddingTop="6dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="6dp"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp"
-            android:textStyle="bold"
+            android:layout_marginStart="8dp"
+            android:clickable="false"
+            android:focusable="false"
+            app:ensureMinTouchTargetSize="false"
             tools:text="已自定义" />
     </LinearLayout>
 

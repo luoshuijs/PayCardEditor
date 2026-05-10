@@ -20,6 +20,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.luoshui.paycardeditor.databinding.FragmentCardStudioBinding
@@ -183,11 +184,17 @@ class CardStudioFragment : Fragment() {
         }
         val outputFile = CardAssetRepository.createTempFile("ucrop_")
         pendingCrop = request.copy(displayName = displayName, outputFile = outputFile)
+        // Resolve crop UI colors from the theme so the cropper matches dynamic
+        // color and the user's light/dark preference.
+        val rootView = binding.root
+        val toolbarBg = MaterialColors.getColor(rootView, com.google.android.material.R.attr.colorSurface)
+        val toolbarFg = MaterialColors.getColor(rootView, com.google.android.material.R.attr.colorOnSurface)
+        val activeAccent = MaterialColors.getColor(rootView, androidx.appcompat.R.attr.colorPrimary)
         val options = UCrop.Options().apply {
             setCompressionFormat(android.graphics.Bitmap.CompressFormat.PNG)
-            setToolbarColor(requireContext().getColor(R.color.surface_card))
-            setToolbarWidgetColor(requireContext().getColor(R.color.text_primary))
-            setActiveControlsWidgetColor(requireContext().getColor(R.color.tone_jade))
+            setToolbarColor(toolbarBg)
+            setToolbarWidgetColor(toolbarFg)
+            setActiveControlsWidgetColor(activeAccent)
             setHideBottomControls(false)
             setFreeStyleCropEnabled(false)
             setShowCropGrid(true)

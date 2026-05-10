@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Material 3 color scheme — dark.
+        Mirrors values/colors.xml; light tokens are remapped for dark surfaces.
+    -->
+
+    <!-- Primary — jade -->
+    <color name="md_primary">#8AD8B6</color>
+    <color name="md_on_primary">#003827</color>
+    <color name="md_primary_container">#005138</color>
+    <color name="md_on_primary_container">#A6F2D2</color>
+
+    <!-- Secondary — amber -->
+    <color name="md_secondary">#FFB873</color>
+    <color name="md_on_secondary">#452B00</color>
+    <color name="md_secondary_container">#623F00</color>
+    <color name="md_on_secondary_container">#FFDDB1</color>
+
+    <!-- Tertiary — coral -->
+    <color name="md_tertiary">#FFB4A6</color>
+    <color name="md_on_tertiary">#561F12</color>
+    <color name="md_tertiary_container">#723426</color>
+    <color name="md_on_tertiary_container">#FFDAD1</color>
+
+    <!-- Error -->
+    <color name="md_error">#FFB4AB</color>
+    <color name="md_on_error">#690005</color>
+    <color name="md_error_container">#93000A</color>
+    <color name="md_on_error_container">#FFDAD6</color>
+
+    <!-- Surface tier -->
+    <color name="md_background">#101415</color>
+    <color name="md_on_background">#E1E3DD</color>
+    <color name="md_surface">#101415</color>
+    <color name="md_on_surface">#E1E3DD</color>
+    <color name="md_surface_variant">#3F4843</color>
+    <color name="md_on_surface_variant">#BEC9C2</color>
+    <color name="md_surface_dim">#101415</color>
+    <color name="md_surface_bright">#363A3B</color>
+    <color name="md_surface_container_lowest">#0B0F10</color>
+    <color name="md_surface_container_low">#181C1D</color>
+    <color name="md_surface_container">#1C2021</color>
+    <color name="md_surface_container_high">#262B2C</color>
+    <color name="md_surface_container_highest">#313537</color>
+
+    <!-- Outline -->
+    <color name="md_outline">#89938C</color>
+    <color name="md_outline_variant">#3F4843</color>
+
+    <!-- Inverse -->
+    <color name="md_inverse_surface">#E1E3DD</color>
+    <color name="md_inverse_on_surface">#2D3133</color>
+    <color name="md_inverse_primary">#1F7A5A</color>
+</resources>

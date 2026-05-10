@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      App-wide text appearances. The "Eyebrow" style is used for the small
+      uppercase section labels (e.g. "Card Studio", "激活检测") that appear at
+      the top of every card. Other styles inherit M3 typescale defaults.
+    -->
+
+    <style name="TextAppearance.PayCardEditor.Eyebrow" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <!--
+      Match the previous baseline-bold rendering for primary content while
+      still going through the M3 type scale. Use Title* for headers and
+      Headline* for the larger snapshot count.
+    -->
+    <style name="TextAppearance.PayCardEditor.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+</resources>

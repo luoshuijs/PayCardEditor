@@ -2,14 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/navigation_home"
-        android:icon="@android:drawable/ic_menu_view"
+        android:icon="@drawable/ic_home"
         android:title="@string/tab_home" />
     <item
         android:id="@+id/navigation_studio"
-        android:icon="@android:drawable/ic_menu_crop"
+        android:icon="@drawable/ic_palette"
         android:title="@string/tab_studio" />
     <item
         android:id="@+id/navigation_preview"
-        android:icon="@android:drawable/ic_menu_gallery"
+        android:icon="@drawable/ic_credit_card"
         android:title="@string/tab_preview" />
 </menu>

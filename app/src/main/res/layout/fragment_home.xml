@@ -18,13 +18,9 @@
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_activation"
+            style="@style/Widget.PayCardEditor.Card"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/surface_card"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/outline_soft"
-            app:strokeWidth="1dp">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -50,18 +46,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/home_status_label"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:textAppearance="@style/TextAppearance.PayCardEditor.Eyebrow" />
 
                     <TextView
                         android:id="@+id/text_activation_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:textColor="@color/text_primary"
-                        android:textSize="22sp"
-                        android:textStyle="bold"
+                        android:textAppearance="?attr/textAppearanceTitleLarge"
+                        android:textColor="?attr/colorOnSurface"
                         tools:text="模块已激活" />
 
                     <TextView
@@ -69,23 +62,18 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:lineSpacingExtra="3dp"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         tools:text="LSPosed 1.9.2 (build 7362) · API 101&#10;作用域已覆盖 com.miui.tsmclient" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.PayCardEditor.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/surface_card"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/outline_soft"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -97,18 +85,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/home_snapshot_label"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.PayCardEditor.Eyebrow" />
 
                 <TextView
                     android:id="@+id/text_card_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:textColor="@color/text_primary"
-                    android:textSize="28sp"
-                    android:textStyle="bold"
+                    android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                    android:textColor="?attr/colorOnSurface"
                     tools:text="3 张卡片" />
 
                 <TextView
@@ -116,8 +101,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     tools:text="最近同步: 03-28 20:16:03" />
 
                 <TextView
@@ -125,8 +110,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     tools:text="最近来源: CardInfoManager.getAll" />
 
                 <TextView
@@ -134,15 +119,20 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:lineSpacingExtra="3dp"
-                    android:textColor="@color/tone_coral"
-                    android:textSize="13sp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorError"
                     android:visibility="gone"
                     tools:text="模块已经接入 libxposed，但还没有收到卡片快照。"
                     tools:visibility="visible" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!--
+          Action stack uses the M3 button hierarchy:
+            primary CTA  → filled
+            sync action  → filled tonal (less prominence than primary)
+            tertiary nav → text button
+        -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -150,20 +140,24 @@
             android:orientation="vertical">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_sync_snapshot"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/home_action_sync"
-                app:icon="@android:drawable/ic_popup_sync" />
-
-            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_open_mipay"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
                 android:text="@string/home_action_open_mipay"
-                app:icon="@android:drawable/ic_menu_view" />
+                app:icon="@drawable/ic_wallet"
+                app:iconGravity="start"
+                app:iconPadding="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_sync_snapshot"
+                style="?attr/materialButtonTonalStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/home_action_sync"
+                app:icon="@drawable/ic_sync"
+                app:iconGravity="start"
+                app:iconPadding="8dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_troubleshoot"
@@ -172,7 +166,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:text="@string/home_action_troubleshoot"
-                app:icon="@android:drawable/ic_menu_help" />
+                app:icon="@drawable/ic_bug_report"
+                app:iconGravity="start"
+                app:iconPadding="8dp" />
         </LinearLayout>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

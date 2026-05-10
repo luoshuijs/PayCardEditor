@@ -1,8 +1,0 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Base.Theme.PayCardEditor" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/tone_jade</item>
-        <item name="colorSecondary">@color/tone_amber</item>
-        <item name="colorSurface">@color/surface_card</item>
-        <item name="android:windowBackground">@color/screen_background</item>
-    </style>
-</resources>

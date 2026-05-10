@@ -13,14 +13,15 @@
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
+            style="@style/Widget.Material3.Toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/surface_card"
+            android:background="?attr/colorSurface"
             android:elevation="0dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
-            android:titleTextColor="@color/black"
-            app:titleTextColor="@color/black" />
+            app:titleTextAppearance="?attr/textAppearanceTitleLarge"
+            app:titleTextColor="?attr/colorOnSurface" />
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/main_fragment_container"
@@ -32,13 +33,8 @@
             android:id="@+id/bottom_navigation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/surface_card"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
-            app:itemActiveIndicatorStyle="@style/Widget.PayCardEditor.BottomNavigation.ActiveIndicator"
-            app:itemIconTint="@color/bottom_navigation_item_tint"
-            app:itemTextColor="@color/bottom_navigation_item_tint"
-            app:labelVisibilityMode="labeled"
             app:menu="@menu/menu_bottom_nav" />
     </LinearLayout>
 

@@ -39,9 +39,24 @@ class CardPreviewAdapter(
                 snapshot.categoryLabel,
                 snapshot.secondaryLabel,
             )
-            binding.textStatus.text = binding.root.context.getString(
+            binding.chipStatus.text = binding.root.context.getString(
                 if (rule == null) R.string.rule_default_short else R.string.rule_applied_short
             )
+            // Color the chip with on-tertiary-container when a custom rule is
+            // applied, on-surface-variant otherwise. Pulls colors from the
+            // theme so dynamic color and dark mode keep working.
+            val container = com.google.android.material.color.MaterialColors.getColor(
+                binding.chipStatus,
+                if (rule == null) com.google.android.material.R.attr.colorSurfaceContainerHigh
+                else com.google.android.material.R.attr.colorTertiaryContainer,
+            )
+            val onContainer = com.google.android.material.color.MaterialColors.getColor(
+                binding.chipStatus,
+                if (rule == null) com.google.android.material.R.attr.colorOnSurfaceVariant
+                else com.google.android.material.R.attr.colorOnTertiaryContainer,
+            )
+            binding.chipStatus.chipBackgroundColor = android.content.res.ColorStateList.valueOf(container)
+            binding.chipStatus.setTextColor(onContainer)
             val imageModel = CardPreviewImageResolver.resolve(snapshot, rule?.replaceCardArt.orEmpty())
             if (imageModel != null) {
                 Glide.with(binding.imagePreview)
