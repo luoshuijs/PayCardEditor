@@ -1,4 +1,4 @@
-package com.luoshui.paycardeditor.hook;
+package com.luoshui.paycardeditor.hook.debug;
 
 import android.os.Build;
 import android.os.Process;
@@ -6,6 +6,12 @@ import android.os.Process;
 import androidx.annotation.NonNull;
 
 import com.luoshui.paycardeditor.BuildConfig;
+import com.luoshui.paycardeditor.hook.HookInstallerSupport;
+import com.luoshui.paycardeditor.hook.HookReflectionUtils;
+import com.luoshui.paycardeditor.hook.card.RemoteCardSnapshotStore;
+import com.luoshui.paycardeditor.hook.dexkit.DexKitHookTargets;
+import com.luoshui.paycardeditor.hook.image.DiskLruCacheReflector;
+import com.luoshui.paycardeditor.hook.image.MemoryCacheHookRegistrar;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -14,13 +20,13 @@ import java.util.Locale;
 
 import io.github.libxposed.api.XposedModule;
 
-final class HookDebugReporter {
+public final class HookDebugReporter {
 
     private final XposedModule mModule;
     private final RemoteCardSnapshotStore mSnapshotStore;
     private final HookInstallerSupport mSupport;
 
-    HookDebugReporter(
+    public HookDebugReporter(
             @NonNull XposedModule module,
             @NonNull RemoteCardSnapshotStore snapshotStore,
             @NonNull HookInstallerSupport support
@@ -35,7 +41,7 @@ final class HookDebugReporter {
      * derivable without a {@link android.content.Context}, so a single call at install time
      * is enough — no host-Application-attach barrier to wait on.
      */
-    void publishTroubleshootState(
+    public void publishTroubleshootState(
             @NonNull String apkPath,
             @NonNull Class<?> cardInfoClass,
             @NonNull Class<?> cardInfoManagerClass,

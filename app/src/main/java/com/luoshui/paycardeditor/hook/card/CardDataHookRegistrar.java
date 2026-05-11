@@ -1,8 +1,13 @@
-package com.luoshui.paycardeditor.hook;
+package com.luoshui.paycardeditor.hook.card;
 
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+
+import com.luoshui.paycardeditor.hook.HookInstallerSupport;
+import com.luoshui.paycardeditor.hook.HookProcessContext;
+import com.luoshui.paycardeditor.hook.HookReflectionUtils;
+import com.luoshui.paycardeditor.hook.dexkit.DexKitHookTargets;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -14,14 +19,14 @@ import java.util.List;
 import io.github.libxposed.api.XposedInterface.ExceptionMode;
 import io.github.libxposed.api.XposedModule;
 
-final class CardDataHookRegistrar {
+public final class CardDataHookRegistrar {
 
     private final XposedModule mModule;
     private final RemoteCardSnapshotStore mSnapshotStore;
     private final BankCardReplacer mBankCardReplacer;
     private final HookInstallerSupport mSupport;
 
-    CardDataHookRegistrar(
+    public CardDataHookRegistrar(
             @NonNull XposedModule module,
             @NonNull RemoteCardSnapshotStore snapshotStore,
             @NonNull BankCardReplacer bankCardReplacer,
@@ -33,7 +38,7 @@ final class CardDataHookRegistrar {
         mSupport = support;
     }
 
-    void installCardInfoHooks(@NonNull Class<?> cardInfoClass) throws NoSuchMethodException {
+    public void installCardInfoHooks(@NonNull Class<?> cardInfoClass) throws NoSuchMethodException {
         Method updateInfo = cardInfoClass.getDeclaredMethod("updateInfo", cardInfoClass);
         mSupport.prepareMethod(updateInfo, "CardInfo.updateInfo");
         mModule.hook(updateInfo)
@@ -49,7 +54,7 @@ final class CardDataHookRegistrar {
         mSupport.recordInstalledHook("CardInfo.updateInfo", updateInfo);
     }
 
-    void installManagerHooks(
+    public void installManagerHooks(
             @NonNull Class<?> cardInfoClass,
             @NonNull Class<?> cardInfoManagerClass,
             @NonNull Class<?> cacheLauncherClass
@@ -92,7 +97,7 @@ final class CardDataHookRegistrar {
         installManagerCollectionHook(cardInfoManagerClass, cacheLauncherClass, "getMifareCards", false, "CardInfoManager.getMifareCards");
     }
 
-    void installBankHooks(@NonNull DexKitHookTargets dexKitTargets) {
+    public void installBankHooks(@NonNull DexKitHookTargets dexKitTargets) {
         Method mergeVirtualCardInfo = dexKitTargets.getBankVirtualCardMerge();
         if (mergeVirtualCardInfo == null) {
             throw new IllegalStateException("DexKit did not resolve bank virtual card merge method");
@@ -122,7 +127,7 @@ final class CardDataHookRegistrar {
         mSupport.recordInstalledHook("BankCardInfo.mergeQueryPanInfo", mergeQueryPanInfo);
     }
 
-    void installTransitHooks(
+    public void installTransitHooks(
             @NonNull Class<?> cardInfoClass,
             @NonNull DexKitHookTargets dexKitTargets
     ) throws NoSuchMethodException {
@@ -140,7 +145,7 @@ final class CardDataHookRegistrar {
         mSupport.recordInstalledHook("CardInfo.updateBackground", updateBackground);
     }
 
-    void installMifareHooks(@NonNull DexKitHookTargets dexKitTargets) {
+    public void installMifareHooks(@NonNull DexKitHookTargets dexKitTargets) {
         Method mifareQuery = dexKitTargets.getMifareQuery();
         if (mifareQuery == null) {
             throw new IllegalStateException("DexKit did not resolve mifare query method");

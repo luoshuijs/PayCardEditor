@@ -7,7 +7,7 @@ import com.luoshui.paycardeditor.model.CardSnapshot
 
 import android.content.Context
 import androidx.core.content.edit
-import com.luoshui.paycardeditor.hook.BankCardRule
+import com.luoshui.paycardeditor.hook.card.BankCardRule
 import org.json.JSONArray
 
 internal object BankCardRuleRepository {

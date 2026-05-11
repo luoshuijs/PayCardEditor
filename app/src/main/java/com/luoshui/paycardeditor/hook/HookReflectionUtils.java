@@ -4,13 +4,13 @@ import androidx.annotation.NonNull;
 
 import java.lang.reflect.Method;
 
-final class HookReflectionUtils {
+public final class HookReflectionUtils {
 
     private HookReflectionUtils() {
     }
 
     @NonNull
-    static Method findOverload(@NonNull Class<?> clazz, String methodName, @NonNull ParameterMatcher matcher) {
+    public static Method findOverload(@NonNull Class<?> clazz, String methodName, @NonNull ParameterMatcher matcher) {
         for (Method method : clazz.getDeclaredMethods()) {
             if ((methodName == null || methodName.equals(method.getName())) && matcher.matches(method.getParameterTypes())) {
                 method.setAccessible(true);
@@ -20,7 +20,7 @@ final class HookReflectionUtils {
         throw new IllegalStateException("Unable to locate overload for " + clazz.getName() + '#' + methodName);
     }
 
-    static Method findDiskCacheMethod(@NonNull Class<?> clazz, @NonNull Class<?> returnType, int parameterCount) {
+    public static Method findDiskCacheMethod(@NonNull Class<?> clazz, @NonNull Class<?> returnType, int parameterCount) {
         for (Method method : clazz.getDeclaredMethods()) {
             if (returnType.equals(method.getReturnType()) && method.getParameterCount() == parameterCount) {
                 method.setAccessible(true);
@@ -30,7 +30,7 @@ final class HookReflectionUtils {
         return null;
     }
 
-    static Method findMethodBySignature(@NonNull Class<?> clazz, @NonNull Class<?> returnType, @NonNull Class<?>... parameterTypes) {
+    public static Method findMethodBySignature(@NonNull Class<?> clazz, @NonNull Class<?> returnType, @NonNull Class<?>... parameterTypes) {
         for (Method method : clazz.getDeclaredMethods()) {
             if (!returnType.equals(method.getReturnType())) {
                 continue;
@@ -54,7 +54,7 @@ final class HookReflectionUtils {
         return null;
     }
 
-    static Method findNoArgMethod(@NonNull Class<?> clazz, @NonNull Class<?> returnType, @NonNull String preferredName) {
+    public static Method findNoArgMethod(@NonNull Class<?> clazz, @NonNull Class<?> returnType, @NonNull String preferredName) {
         Method preferred = null;
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.getParameterCount() != 0 || !returnType.equals(method.getReturnType())) {
@@ -72,7 +72,7 @@ final class HookReflectionUtils {
     }
 
     @NonNull
-    static String describeMethods(@NonNull Class<?> clazz) {
+    public static String describeMethods(@NonNull Class<?> clazz) {
         StringBuilder builder = new StringBuilder();
         Method[] methods = clazz.getDeclaredMethods();
         for (int index = 0; index < methods.length; index++) {
@@ -96,7 +96,7 @@ final class HookReflectionUtils {
     }
 
     @FunctionalInterface
-    interface ParameterMatcher {
+    public interface ParameterMatcher {
         boolean matches(Class<?>[] parameterTypes);
     }
 }

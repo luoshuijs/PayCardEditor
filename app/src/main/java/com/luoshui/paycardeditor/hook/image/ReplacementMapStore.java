@@ -1,4 +1,4 @@
-package com.luoshui.paycardeditor.hook;
+package com.luoshui.paycardeditor.hook.image;
 
 import android.content.Context;
 import android.net.Uri;
@@ -8,6 +8,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.luoshui.paycardeditor.core.HookEnvironment;
+import com.luoshui.paycardeditor.hook.HookProcessContext;
+import com.luoshui.paycardeditor.hook.card.BankCardRule;
 import com.luoshui.paycardeditor.model.CardSnapshot;
 
 import org.json.JSONArray;
@@ -32,7 +34,7 @@ import io.github.libxposed.api.XposedModule;
  * our own UI process, and the snapshot provider is cheap. A 5 s ceiling bounds the
  * rule-change → take-effect delay without putting any RPC on the disk-cache hot path.
  */
-final class ReplacementMapStore {
+public final class ReplacementMapStore {
 
     private static final String TAG = "PayCardEditorHook";
     private static final long REFRESH_INTERVAL_MS = 5_000L;
@@ -41,7 +43,7 @@ final class ReplacementMapStore {
     private volatile long mLoadedAt = 0L;
     private volatile Map<String, CacheReplacementTarget> mMap = Collections.emptyMap();
 
-    ReplacementMapStore(@NonNull XposedModule module) {
+    public ReplacementMapStore(@NonNull XposedModule module) {
         mModule = module;
     }
 

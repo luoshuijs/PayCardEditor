@@ -1,9 +1,11 @@
-package com.luoshui.paycardeditor.hook;
+package com.luoshui.paycardeditor.hook.image;
 
 import android.content.Context;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
+
+import com.luoshui.paycardeditor.hook.HookProcessContext;
 
 import java.io.File;
 import java.io.FileOutputStream;

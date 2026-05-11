@@ -6,6 +6,17 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.luoshui.paycardeditor.core.HookEnvironment;
+import com.luoshui.paycardeditor.hook.card.BankCardReplacer;
+import com.luoshui.paycardeditor.hook.card.CardDataHookRegistrar;
+import com.luoshui.paycardeditor.hook.card.RemoteCardSnapshotStore;
+import com.luoshui.paycardeditor.hook.debug.HookDebugReporter;
+import com.luoshui.paycardeditor.hook.dexkit.DexKitHookTargets;
+import com.luoshui.paycardeditor.hook.dexkit.DexKitMethodLocator;
+import com.luoshui.paycardeditor.hook.dexkit.DexKitTargetDescriptors;
+import com.luoshui.paycardeditor.hook.dexkit.DexKitTargetsCache;
+import com.luoshui.paycardeditor.hook.image.ImageCacheHookRegistrar;
+import com.luoshui.paycardeditor.hook.image.MemoryCacheHookRegistrar;
+import com.luoshui.paycardeditor.hook.image.ReplacementMapStore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +29,6 @@ final class PayCardHookInstaller {
 
     private final XposedModule mModule;
     private final RemoteCardSnapshotStore mSnapshotStore;
-    private final List<HookInstallerSupport.HookRecord> mInstalledHookRecords = new ArrayList<>();
-    private final HookInstallerSupport mSupport;
     private final CardDataHookRegistrar mCardDataHooks;
     private final ImageCacheHookRegistrar mImageCacheHooks;
     private final MemoryCacheHookRegistrar mMemoryCacheHooks;
@@ -32,7 +41,8 @@ final class PayCardHookInstaller {
         mModule = module;
         mSnapshotStore = new RemoteCardSnapshotStore(module);
         BankCardReplacer bankCardReplacer = new BankCardReplacer(module);
-        mSupport = new HookInstallerSupport(module, mInstalledHookRecords);
+        List<HookInstallerSupport.HookRecord> mInstalledHookRecords = new ArrayList<>();
+        HookInstallerSupport mSupport = new HookInstallerSupport(module, mInstalledHookRecords);
         mCardDataHooks = new CardDataHookRegistrar(module, mSnapshotStore, bankCardReplacer, mSupport);
         ReplacementMapStore replacementStore = new ReplacementMapStore(module);
         mImageCacheHooks = new ImageCacheHookRegistrar(module, mSupport, replacementStore);

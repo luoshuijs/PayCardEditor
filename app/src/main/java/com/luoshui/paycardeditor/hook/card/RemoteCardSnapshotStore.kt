@@ -1,14 +1,15 @@
-package com.luoshui.paycardeditor.hook
+package com.luoshui.paycardeditor.hook.card
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.core.net.toUri
 import com.luoshui.paycardeditor.core.HookEnvironment
+import com.luoshui.paycardeditor.hook.HookProcessContext
 import com.luoshui.paycardeditor.model.CardSnapshot
 import com.luoshui.paycardeditor.model.firstNonBlank
 import io.github.libxposed.api.XposedModule
 import org.json.JSONArray
-import org.json.JSONObject
 
 internal class RemoteCardSnapshotStore(
     private val module: XposedModule,
@@ -160,7 +161,7 @@ internal class RemoteCardSnapshotStore(
         invokeProvider(context, method, extras)
     }
 
-    private fun invokeProvider(context: android.content.Context, method: String, extras: Bundle) {
+    private fun invokeProvider(context: Context, method: String, extras: Bundle) {
         try {
             context.contentResolver.call(providerUri, method, null, Bundle(extras))
         } catch (throwable: Throwable) {
@@ -177,7 +178,7 @@ internal class RemoteCardSnapshotStore(
         }
     }
 
-    private fun flushPendingCalls(context: android.content.Context) {
+    private fun flushPendingCalls(context: Context) {
         val queuedCalls = synchronized(lock) {
             if (flushingPendingCalls || pendingCalls.isEmpty()) {
                 return

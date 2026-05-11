@@ -1,13 +1,18 @@
-package com.luoshui.paycardeditor.hook;
+package com.luoshui.paycardeditor.hook.image;
 
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.luoshui.paycardeditor.hook.debug.HookDebugReporter;
+import com.luoshui.paycardeditor.hook.HookInstallerSupport;
+import com.luoshui.paycardeditor.hook.dexkit.DexKitHookTargets;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.Map;
 
 import io.github.libxposed.api.XposedInterface.ExceptionMode;
@@ -50,7 +55,7 @@ import io.github.libxposed.api.XposedModule;
  *         alone.</li>
  * </ul>
  */
-final class MemoryCacheHookRegistrar {
+public final class MemoryCacheHookRegistrar {
 
     private static final String TAG = "PayCardEditorHook";
 
@@ -58,7 +63,7 @@ final class MemoryCacheHookRegistrar {
     private final HookInstallerSupport mSupport;
     private final ReplacementMapStore mReplacementStore;
 
-    MemoryCacheHookRegistrar(
+    public MemoryCacheHookRegistrar(
             @NonNull XposedModule module,
             @NonNull HookInstallerSupport support,
             @NonNull ReplacementMapStore replacementStore
@@ -73,7 +78,7 @@ final class MemoryCacheHookRegistrar {
      * {@link DexKitHookTargets#getGlideEngineClass()} (fingerprinted by the string
      * {@code "Started new load"}); the method to hook is selected by shape rather than name.
      */
-    void installMemoryHooks(@NonNull DexKitHookTargets dexKitTargets) {
+    public void installMemoryHooks(@NonNull DexKitHookTargets dexKitTargets) {
         Class<?> engineClass = dexKitTargets.getGlideEngineClass();
         if (engineClass == null) {
             mModule.log(Log.WARN, TAG, "Engine memory lookup hook skipped: Glide Engine class not resolved by DexKit");
@@ -117,7 +122,7 @@ final class MemoryCacheHookRegistrar {
      * <p>Package-private so {@link HookDebugReporter} can surface the resolved method on the
      * troubleshoot page without duplicating the shape rules.
      */
-    static @Nullable Method findLoadFromCacheMethod(@NonNull Class<?> engineClass) {
+    public static @Nullable Method findLoadFromCacheMethod(@NonNull Class<?> engineClass) {
         Method best = null;
         for (Method method : engineClass.getDeclaredMethods()) {
             if (method.getParameterCount() != 3) {
@@ -221,9 +226,7 @@ final class MemoryCacheHookRegistrar {
         java.util.List<Field> fields = new java.util.ArrayList<>();
         Class<?> current = startClass;
         while (current != null && current != Object.class) {
-            for (Field field : current.getDeclaredFields()) {
-                fields.add(field);
-            }
+            Collections.addAll(fields, current.getDeclaredFields());
             current = current.getSuperclass();
         }
         return fields;

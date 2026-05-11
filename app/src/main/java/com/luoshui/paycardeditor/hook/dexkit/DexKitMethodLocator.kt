@@ -1,4 +1,4 @@
-package com.luoshui.paycardeditor.hook
+package com.luoshui.paycardeditor.hook.dexkit
 
 import android.util.Log
 import io.github.libxposed.api.XposedModule
@@ -19,7 +19,7 @@ internal data class DexKitHookTargets(
     val glideDiskCacheGet: Method? = null,
     val glideDiskCachePut: Method? = null,
     /**
-     * Glide's Engine class, used by [MemoryCacheHookRegistrar] to hook the unified
+     * Glide's Engine class, used by [com.luoshui.paycardeditor.hook.image.MemoryCacheHookRegistrar] to hook the unified
      * memory-cache lookup ({@code loadFromCache(EngineKey, boolean, long)}). Fingerprinted
      * by the verbatim string {@code "Started new load"} which Glide v4 emits when debug
      * logging is enabled — present in classes.dex even when logging is off.

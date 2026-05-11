@@ -1,9 +1,14 @@
-package com.luoshui.paycardeditor.hook;
+package com.luoshui.paycardeditor.hook.image;
 
 import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import com.luoshui.paycardeditor.hook.HookInstallerSupport;
+import com.luoshui.paycardeditor.hook.HookProcessContext;
+import com.luoshui.paycardeditor.hook.HookReflectionUtils;
+import com.luoshui.paycardeditor.hook.dexkit.DexKitHookTargets;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -14,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.github.libxposed.api.XposedInterface.ExceptionMode;
 import io.github.libxposed.api.XposedModule;
 
-final class ImageCacheHookRegistrar {
+public final class ImageCacheHookRegistrar {
 
     private static final String TAG = "PayCardEditorHook";
 
@@ -32,7 +37,7 @@ final class ImageCacheHookRegistrar {
     private final Map<String, Object> mSafeKeyWriteLocks = new ConcurrentHashMap<>();
     private final Map<String, Long> mLastReplacementTimestampMap = new ConcurrentHashMap<>();
 
-    ImageCacheHookRegistrar(
+    public ImageCacheHookRegistrar(
             @NonNull XposedModule module,
             @NonNull HookInstallerSupport support,
             @NonNull ReplacementMapStore replacementStore
@@ -42,7 +47,7 @@ final class ImageCacheHookRegistrar {
         mReplacementStore = replacementStore;
     }
 
-    void installImageHooks(@NonNull DexKitHookTargets dexKitTargets) {
+    public void installImageHooks(@NonNull DexKitHookTargets dexKitTargets) {
         installGlideTokenHooks(dexKitTargets);
         installGlideDiskCacheHooks(dexKitTargets);
     }

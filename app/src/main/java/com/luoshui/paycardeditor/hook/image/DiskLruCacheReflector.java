@@ -1,7 +1,10 @@
-package com.luoshui.paycardeditor.hook;
+package com.luoshui.paycardeditor.hook.image;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.luoshui.paycardeditor.hook.HookReflectionUtils;
+import com.luoshui.paycardeditor.hook.dexkit.DexKitMethodLocator;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -44,7 +47,7 @@ import java.lang.reflect.Method;
  * installation. Keeping the reflection logic isolated lets the hook installer focus on
  * its actual responsibility and makes the reflection rules amenable to targeted testing.
  */
-final class DiskLruCacheReflector {
+public final class DiskLruCacheReflector {
 
     private DiskLruCacheReflector() {
     }
@@ -55,7 +58,7 @@ final class DiskLruCacheReflector {
      * shape that {@link #hasDiskLruCacheApi} checks for, so we don't depend on the R8
      * name {@code j3.a}.
      */
-    static @Nullable Class<?> resolveDiskLruCacheClass(@NonNull Class<?> diskCacheWrapperClass) {
+    public static @Nullable Class<?> resolveDiskLruCacheClass(@NonNull Class<?> diskCacheWrapperClass) {
         for (Field field : diskCacheWrapperClass.getDeclaredFields()) {
             if (hasDiskLruCacheApi(field.getType())) {
                 return field.getType();

@@ -11,7 +11,7 @@ import java.util.List;
 
 import io.github.libxposed.api.XposedModule;
 
-final class HookInstallerSupport {
+public final class HookInstallerSupport {
 
     private static final String TAG = "PayCardEditorHook";
 
@@ -23,7 +23,7 @@ final class HookInstallerSupport {
         mInstalledHookRecords = installedHookRecords;
     }
 
-    void prepareMethod(@NonNull Method method, @NonNull String label) {
+    public void prepareMethod(@NonNull Method method, @NonNull String label) {
         method.setAccessible(true);
         try {
             boolean deoptimized = mModule.deoptimize(method);
@@ -33,7 +33,7 @@ final class HookInstallerSupport {
         }
     }
 
-    void runHookSideEffect(@NonNull String source, @NonNull HookSideEffect action) {
+    public void runHookSideEffect(@NonNull String source, @NonNull HookSideEffect action) {
         try {
             action.run();
         } catch (UnsupportedOperationException exception) {
@@ -43,20 +43,20 @@ final class HookInstallerSupport {
         }
     }
 
-    void recordInstalledHook(@NonNull String label, @NonNull Method method) {
+    public void recordInstalledHook(@NonNull String label, @NonNull Method method) {
         synchronized (mInstalledHookRecords) {
             mInstalledHookRecords.add(new HookRecord(label, method));
         }
     }
 
-    int getInstalledHookCount() {
+    public int getInstalledHookCount() {
         synchronized (mInstalledHookRecords) {
             return mInstalledHookRecords.size();
         }
     }
 
     @NonNull
-    List<?> copyCards(@NonNull Collection<?> cards) {
+    public List<?> copyCards(@NonNull Collection<?> cards) {
         return new ArrayList<>(cards);
     }
 
@@ -71,7 +71,7 @@ final class HookInstallerSupport {
     }
 
     @FunctionalInterface
-    interface HookSideEffect {
+    public interface HookSideEffect {
         void run() throws Throwable;
     }
 }
