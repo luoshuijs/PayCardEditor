@@ -113,8 +113,11 @@ final class MemoryCacheHookRegistrar {
      * parameters where param[1] is {@code boolean} and param[2] is {@code long}. The first
      * parameter type (EngineKey) is unique within Engine and doesn't need to be named
      * because no other private method on Engine shares this signature pattern in Glide v4.
+     *
+     * <p>Package-private so {@link HookDebugReporter} can surface the resolved method on the
+     * troubleshoot page without duplicating the shape rules.
      */
-    private static @Nullable Method findLoadFromCacheMethod(@NonNull Class<?> engineClass) {
+    static @Nullable Method findLoadFromCacheMethod(@NonNull Class<?> engineClass) {
         Method best = null;
         for (Method method : engineClass.getDeclaredMethods()) {
             if (method.getParameterCount() != 3) {

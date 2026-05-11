@@ -110,6 +110,18 @@ final class HookDebugReporter {
         }
         candidates.add(new HookCandidate("DiskLruCache.remove", resolveDeclaringClass(diskRemoveMethod), diskRemoveMethod));
         candidates.add(new HookCandidate("MifareModel.queryDoorCardInfo", resolveDeclaringClass(dexKitTargets.getMifareQuery()), dexKitTargets.getMifareQuery()));
+        // Engine memory-cache lookup hook: located by shape inside the Engine class. Delegate
+        // to MemoryCacheHookRegistrar so the troubleshoot page and the installer agree on
+        // which method gets hooked (no duplicated selection rules).
+        Class<?> engineClass = dexKitTargets.getGlideEngineClass();
+        Method engineLoadFromCacheMethod = engineClass != null
+                ? MemoryCacheHookRegistrar.findLoadFromCacheMethod(engineClass)
+                : null;
+        candidates.add(new HookCandidate(
+                "Engine.loadFromCache",
+                engineLoadFromCacheMethod != null ? engineLoadFromCacheMethod.getDeclaringClass() : engineClass,
+                engineLoadFromCacheMethod
+        ));
         StringBuilder builder = new StringBuilder();
         for (int index = 0; index < candidates.size(); index++) {
             HookCandidate candidate = candidates.get(index);
