@@ -49,6 +49,7 @@ class SnapshotSyncProvider : ContentProvider() {
                 putString(HookEnvironment.EXTRA_DEXKIT_CACHE_JSON, loadDexKitCacheJson(prefs))
             }
             HookEnvironment.METHOD_CLEAR_DEXKIT_CACHE -> clearDexKitCache(prefs)
+            HookEnvironment.METHOD_NOTIFY_RULES_INVALIDATED -> notifyRulesInvalidated()
         }
         return Bundle()
     }
@@ -193,6 +194,24 @@ class SnapshotSyncProvider : ContentProvider() {
 
     private fun clearDexKitCache(prefs: android.content.SharedPreferences) {
         prefs.edit { remove(HookEnvironment.PREF_KEY_DEXKIT_CACHE) }
+    }
+
+    /**
+     * Pushes a {@code notifyChange} on the bank-rules URI so any registered observer in the
+     * hook process drops its TTL cache immediately. Callers are responsible for having
+     * persisted the new rule state before invoking this — the URI is a pure notification
+     * channel and carries no payload.
+     */
+    private fun notifyRulesInvalidated() {
+        val ctx = context ?: return
+        ctx.contentResolver.notifyChange(
+            Uri.Builder()
+                .scheme("content")
+                .authority(HookEnvironment.SNAPSHOT_PROVIDER_AUTHORITY)
+                .appendPath(HookEnvironment.PATH_BANK_RULES)
+                .build(),
+            null,
+        )
     }
 
     private fun resolveAssetFile(assetId: String): java.io.File? {

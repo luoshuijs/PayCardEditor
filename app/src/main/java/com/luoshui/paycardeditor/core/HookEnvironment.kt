@@ -17,6 +17,7 @@ object HookEnvironment {
     const val PREF_KEY_TROUBLESHOOT_UPDATED_AT = "troubleshoot_updated_at"
     const val PREF_KEY_DEXKIT_CACHE = "dexkit_targets_cache"
     const val PATH_CARD_ASSETS = "card-assets"
+    const val PATH_BANK_RULES = "bank-rules"
     const val EXTRA_PAYLOAD = "payload"
     const val EXTRA_REPLACE = "replace"
     const val EXTRA_SOURCE = "source"
@@ -34,4 +35,5 @@ object HookEnvironment {
     const val METHOD_UPSERT_DEXKIT_CACHE = "upsert_dexkit_cache"
     const val METHOD_GET_DEXKIT_CACHE = "get_dexkit_cache"
     const val METHOD_CLEAR_DEXKIT_CACHE = "clear_dexkit_cache"
+    const val METHOD_NOTIFY_RULES_INVALIDATED = "notify_rules_invalidated"
 }

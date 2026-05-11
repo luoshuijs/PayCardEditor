@@ -1,8 +1,11 @@
 package com.luoshui.paycardeditor.hook.image;
 
 import android.content.Context;
+import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -21,6 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.github.libxposed.api.XposedModule;
 
@@ -30,16 +34,22 @@ import io.github.libxposed.api.XposedModule;
  * installers so that the install-and-forget surface stays readable and so that future
  * registrars can share the same in-memory snapshot without duplicating reload logic.
  *
- * <p>Why TTL instead of push: the host process can't easily observe rule edits made in
- * our own UI process, and the snapshot provider is cheap. A 5 s ceiling bounds the
- * rule-change → take-effect delay without putting any RPC on the disk-cache hot path.
+ * <p>The 5 s TTL is the worst-case ceiling for a rule edit to take effect. The editor
+ * process additionally pokes us via {@link ContentObserver} on the bank-rules URI so the
+ * common case (editor commits a rule, user immediately reopens Mi Pay) sees the change
+ * within one frame, not 5 seconds. Falling back to the TTL when the observer can't be
+ * registered keeps things working on hosts where the provider authority is unreachable.
  */
 public final class ReplacementMapStore {
 
     private static final String TAG = "PayCardEditorHook";
     private static final long REFRESH_INTERVAL_MS = 5_000L;
+    private static final Uri BANK_RULES_NOTIFY_URI =
+            Uri.parse("content://" + HookEnvironment.SNAPSHOT_PROVIDER_AUTHORITY
+                    + "/" + HookEnvironment.PATH_BANK_RULES);
 
     private final XposedModule mModule;
+    private final AtomicBoolean mObserverRegistered = new AtomicBoolean(false);
     private volatile long mLoadedAt = 0L;
     private volatile Map<String, CacheReplacementTarget> mMap = Collections.emptyMap();
 
@@ -63,6 +73,7 @@ public final class ReplacementMapStore {
 
     @NonNull
     Map<String, CacheReplacementTarget> getOrLoad(@NonNull Context context) {
+        registerInvalidationObserverIfNeeded(context);
         long now = System.currentTimeMillis();
         Map<String, CacheReplacementTarget> cached = mMap;
         if (now - mLoadedAt < REFRESH_INTERVAL_MS) {
@@ -76,6 +87,41 @@ public final class ReplacementMapStore {
             mMap = loaded;
             mLoadedAt = now;
             return loaded;
+        }
+    }
+
+    /**
+     * Registers a one-shot {@link ContentObserver} on the editor's bank-rules notify URI
+     * so a rule edit invalidates our TTL cache immediately. Idempotent — only the first
+     * caller wins. Failures are logged and fall through to the TTL path, never raised.
+     *
+     * <p>The observer body just resets {@code mLoadedAt} to force the next
+     * {@link #getOrLoad(Context)} caller into a fresh provider read; we deliberately do
+     * <em>not</em> proactively reload from the observer thread because (a) the hot path
+     * does not run there and (b) any reload work would race with disk-cache hooks that
+     * might be in the middle of looking up replacements.
+     */
+    private void registerInvalidationObserverIfNeeded(@NonNull Context context) {
+        if (!mObserverRegistered.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            Handler handler = new Handler(Looper.getMainLooper());
+            context.getContentResolver().registerContentObserver(
+                    BANK_RULES_NOTIFY_URI,
+                    false,
+                    new ContentObserver(handler) {
+                        @Override
+                        public void onChange(boolean selfChange, Uri changedUri) {
+                            mLoadedAt = 0L;
+                            mModule.log(Log.DEBUG, TAG, "Replacement map invalidated by editor: uri=" + changedUri);
+                        }
+                    }
+            );
+            mModule.log(Log.INFO, TAG, "Replacement map invalidation observer registered");
+        } catch (Throwable throwable) {
+            mObserverRegistered.set(false);
+            mModule.log(Log.WARN, TAG, "register replacement map observer failed: " + Log.getStackTraceString(throwable));
         }
     }
 
