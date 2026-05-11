@@ -56,16 +56,16 @@ final class MemoryCacheHookRegistrar {
 
     private final XposedModule mModule;
     private final HookInstallerSupport mSupport;
-    private final ImageCacheHookRegistrar mImageCacheHookRegistrar;
+    private final ReplacementMapStore mReplacementStore;
 
     MemoryCacheHookRegistrar(
             @NonNull XposedModule module,
             @NonNull HookInstallerSupport support,
-            @NonNull ImageCacheHookRegistrar imageCacheHookRegistrar
+            @NonNull ReplacementMapStore replacementStore
     ) {
         mModule = module;
         mSupport = support;
-        mImageCacheHookRegistrar = imageCacheHookRegistrar;
+        mReplacementStore = replacementStore;
     }
 
     /**
@@ -170,8 +170,7 @@ final class MemoryCacheHookRegistrar {
         if (key == null) {
             return false;
         }
-        Map<String, ImageCacheHookRegistrar.CacheReplacementTarget> replacementMap =
-                mImageCacheHookRegistrar.snapshotReplacementMap();
+        Map<String, CacheReplacementTarget> replacementMap = mReplacementStore.snapshot();
         if (replacementMap.isEmpty()) {
             return false;
         }
@@ -202,7 +201,7 @@ final class MemoryCacheHookRegistrar {
 
     private boolean containsReplacementToken(
             @NonNull String haystack,
-            @NonNull Map<String, ImageCacheHookRegistrar.CacheReplacementTarget> replacementMap
+            @NonNull Map<String, CacheReplacementTarget> replacementMap
     ) {
         if (haystack.isEmpty()) {
             return false;

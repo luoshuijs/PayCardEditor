@@ -40,12 +40,11 @@ final class HookDebugReporter {
             @NonNull Class<?> cardInfoClass,
             @NonNull Class<?> cardInfoManagerClass,
             @NonNull Class<?> cacheLauncherClass,
-            @NonNull DexKitHookTargets dexKitTargets,
-            @NonNull ImageCacheHookRegistrar imageCacheHooks
+            @NonNull DexKitHookTargets dexKitTargets
     ) {
         try {
             String debugStatus = buildDebugStatus(apkPath);
-            String hookMethods = buildHookMethodList(cardInfoClass, cardInfoManagerClass, cacheLauncherClass, dexKitTargets, imageCacheHooks);
+            String hookMethods = buildHookMethodList(cardInfoClass, cardInfoManagerClass, cacheLauncherClass, dexKitTargets);
             mSnapshotStore.updateTroubleshootState(debugStatus, hookMethods);
         } catch (Throwable ignored) {
         }
@@ -81,8 +80,7 @@ final class HookDebugReporter {
             @NonNull Class<?> cardInfoClass,
             @NonNull Class<?> cardInfoManagerClass,
             @NonNull Class<?> cacheLauncherClass,
-            @NonNull DexKitHookTargets dexKitTargets,
-            @NonNull ImageCacheHookRegistrar imageCacheHooks
+            @NonNull DexKitHookTargets dexKitTargets
     ) throws NoSuchMethodException {
         List<HookCandidate> candidates = new ArrayList<>();
         candidates.add(new HookCandidate("CardInfo.updateInfo", cardInfoClass, cardInfoClass.getDeclaredMethod("updateInfo", cardInfoClass)));
@@ -103,7 +101,7 @@ final class HookDebugReporter {
         Method diskRemoveMethod = null;
         Class<?> diskCacheWrapperClass = dexKitTargets.getGlideDiskCacheWrapperClass();
         if (diskCacheWrapperClass != null) {
-            Class<?> diskLruCacheClass = imageCacheHooks.resolveDiskLruCacheClass(diskCacheWrapperClass);
+            Class<?> diskLruCacheClass = DiskLruCacheReflector.resolveDiskLruCacheClass(diskCacheWrapperClass);
             if (diskLruCacheClass != null) {
                 diskRemoveMethod = HookReflectionUtils.findMethodBySignature(diskLruCacheClass, Boolean.TYPE, String.class);
             }
