@@ -61,4 +61,37 @@
     <string name="preview_detail_status">当前状态: %1$s</string>
     <string name="preview_item_subtitle">%1$s · %2$s</string>
     <string name="rule_restored_message">已恢复 %1$s 的默认卡面</string>
+
+    <string name="settings_title">设置</string>
+    <string name="settings_menu_action">设置</string>
+    <string name="settings_section_eyebrow">uCrop 裁剪</string>
+
+    <!-- Settings list rows -->
+    <string name="settings_row_crop_aspect_title">裁剪比例</string>
+    <string name="settings_row_crop_size_title">最大输出尺寸</string>
+    <string name="settings_value_aspect_format">%1$d : %2$d</string>
+    <string name="settings_value_size_format">%1$d × %2$d</string>
+
+    <!-- Dialog content -->
+    <string name="settings_dialog_aspect_title">裁剪比例</string>
+    <string name="settings_dialog_size_title">最大输出尺寸</string>
+    <string name="settings_dialog_aspect_hint">UCrop 裁剪框的宽高比，默认 192:121（米家卡面比例）</string>
+    <string name="settings_dialog_size_hint">裁剪结果的最大像素尺寸，默认 960 × 605</string>
+
+    <!-- Field labels (shared between aspect & size dialogs) -->
+    <string name="settings_field_aspect_x">比例 X</string>
+    <string name="settings_field_aspect_y">比例 Y</string>
+    <string name="settings_field_max_width">宽度 (px)</string>
+    <string name="settings_field_max_height">高度 (px)</string>
+
+    <!-- Dialog buttons -->
+    <string name="settings_action_save">保存</string>
+    <string name="settings_action_reset">重置为默认</string>
+    <string name="settings_action_cancel">取消</string>
+
+    <!-- Validation & feedback -->
+    <string name="settings_error_aspect">请输入 %1$d - %2$d 的整数</string>
+    <string name="settings_error_size">请输入 %1$d - %2$d 的整数</string>
+    <string name="settings_saved_message">已保存</string>
+    <string name="settings_save_failed_message">保存失败，请重试</string>
 </resources>

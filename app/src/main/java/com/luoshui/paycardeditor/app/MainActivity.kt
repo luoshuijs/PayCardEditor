@@ -4,12 +4,16 @@ import com.luoshui.paycardeditor.R
 import com.luoshui.paycardeditor.data.ModuleStateRepository
 import com.luoshui.paycardeditor.feature.home.HomeFragment
 import com.luoshui.paycardeditor.feature.preview.CardPreviewFragment
+import com.luoshui.paycardeditor.feature.settings.SettingsActivity
 import com.luoshui.paycardeditor.feature.studio.CardStudioFragment
 import com.luoshui.paycardeditor.model.CardSnapshotFormatter
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -59,6 +63,21 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             binding.bottomNavigation.selectedItemId = R.id.navigation_home
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 

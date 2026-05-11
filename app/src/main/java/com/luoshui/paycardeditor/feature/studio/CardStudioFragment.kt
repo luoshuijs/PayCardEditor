@@ -201,9 +201,10 @@ class CardStudioFragment : Fragment() {
             setShowCropFrame(true)
         }
         try {
+            val cropConfig = CropConfig.load(requireContext())
             val intent = UCrop.of(Uri.fromFile(sourceFile), Uri.fromFile(outputFile))
-                .withAspectRatio(192f, 121f)
-                .withMaxResultSize(960, 605)
+                .withAspectRatio(cropConfig.aspectX.toFloat(), cropConfig.aspectY.toFloat())
+                .withMaxResultSize(cropConfig.maxWidth, cropConfig.maxHeight)
                 .withOptions(options)
                 .getIntent(requireContext())
             val resolved = intent.resolveActivity(requireContext().packageManager)
