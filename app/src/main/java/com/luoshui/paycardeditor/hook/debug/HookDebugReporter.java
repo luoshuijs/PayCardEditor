@@ -6,21 +6,19 @@ import android.os.Process;
 import androidx.annotation.NonNull;
 
 import com.luoshui.paycardeditor.BuildConfig;
+import com.luoshui.paycardeditor.hook.HookCatalog;
 import com.luoshui.paycardeditor.hook.HookInstallerSupport;
-import com.luoshui.paycardeditor.hook.HookReflectionUtils;
 import com.luoshui.paycardeditor.hook.card.RemoteCardSnapshotStore;
-import com.luoshui.paycardeditor.hook.dexkit.DexKitHookTargets;
-import com.luoshui.paycardeditor.hook.image.DiskLruCacheReflector;
-import com.luoshui.paycardeditor.hook.image.MemoryCacheHookRegistrar;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import io.github.libxposed.api.XposedModule;
 
 public final class HookDebugReporter {
+
+    private static final String MISSING_PLACEHOLDER = "(void*)0";
 
     private final XposedModule mModule;
     private final RemoteCardSnapshotStore mSnapshotStore;
@@ -37,20 +35,17 @@ public final class HookDebugReporter {
     }
 
     /**
-     * Publishes the troubleshoot snapshot. Every input is either constant for the host or
-     * derivable without a {@link android.content.Context}, so a single call at install time
-     * is enough — no host-Application-attach barrier to wait on.
+     * Publishes the troubleshoot snapshot. The hook list is derived entirely from
+     * {@link HookInstallerSupport#snapshotInstalledMethodsByCatalog()}, which means the
+     * troubleshoot page can never disagree with what the installer actually hooked:
+     * every entry in {@link HookCatalog} shows up exactly once, ordered by the enum
+     * declaration order, with the resolved method when present and a {@code (void*)0}
+     * placeholder when the installer failed to hook it.
      */
-    public void publishTroubleshootState(
-            @NonNull String apkPath,
-            @NonNull Class<?> cardInfoClass,
-            @NonNull Class<?> cardInfoManagerClass,
-            @NonNull Class<?> cacheLauncherClass,
-            @NonNull DexKitHookTargets dexKitTargets
-    ) {
+    public void publishTroubleshootState(@NonNull String apkPath) {
         try {
             String debugStatus = buildDebugStatus(apkPath);
-            String hookMethods = buildHookMethodList(cardInfoClass, cardInfoManagerClass, cacheLauncherClass, dexKitTargets);
+            String hookMethods = buildHookMethodList();
             mSnapshotStore.updateTroubleshootState(debugStatus, hookMethods);
         } catch (Throwable ignored) {
         }
@@ -82,53 +77,13 @@ public final class HookDebugReporter {
     }
 
     @NonNull
-    private String buildHookMethodList(
-            @NonNull Class<?> cardInfoClass,
-            @NonNull Class<?> cardInfoManagerClass,
-            @NonNull Class<?> cacheLauncherClass,
-            @NonNull DexKitHookTargets dexKitTargets
-    ) throws NoSuchMethodException {
-        List<HookCandidate> candidates = new ArrayList<>();
-        candidates.add(new HookCandidate("CardInfo.updateInfo", cardInfoClass, cardInfoClass.getDeclaredMethod("updateInfo", cardInfoClass)));
-        candidates.add(new HookCandidate("CardInfoManager.put(CardInfo)", cardInfoManagerClass, HookReflectionUtils.findOverload(cardInfoManagerClass, "put", parameterTypes ->
-                parameterTypes.length == 1 && cardInfoClass.getName().equals(parameterTypes[0].getName()))));
-        candidates.add(new HookCandidate("CardInfoManager.put(List)", cardInfoManagerClass, HookReflectionUtils.findOverload(cardInfoManagerClass, "put", parameterTypes ->
-                parameterTypes.length == 1 && List.class.isAssignableFrom(parameterTypes[0]))));
-        candidates.add(new HookCandidate("CardInfoManager.getAll", cardInfoManagerClass, cardInfoManagerClass.getDeclaredMethod("getAll", cacheLauncherClass)));
-        candidates.add(new HookCandidate("CardInfoManager.getBankCards", cardInfoManagerClass, cardInfoManagerClass.getDeclaredMethod("getBankCards", cacheLauncherClass)));
-        candidates.add(new HookCandidate("CardInfoManager.getIssuedTransCards", cardInfoManagerClass, cardInfoManagerClass.getDeclaredMethod("getIssuedTransCards", cacheLauncherClass)));
-        candidates.add(new HookCandidate("CardInfoManager.getMifareCards", cardInfoManagerClass, cardInfoManagerClass.getDeclaredMethod("getMifareCards", cacheLauncherClass)));
-        candidates.add(new HookCandidate("BankCardInfo.mergeVirtualCardInfo", resolveDeclaringClass(dexKitTargets.getBankVirtualCardMerge()), dexKitTargets.getBankVirtualCardMerge()));
-        candidates.add(new HookCandidate("BankCardInfo.mergeQueryPanInfo", resolveDeclaringClass(dexKitTargets.getBankQueryPanMerge()), dexKitTargets.getBankQueryPanMerge()));
-        candidates.add(new HookCandidate("CardInfo.updateBackground", resolveDeclaringClass(dexKitTargets.getTransitUpdateBackground(), cardInfoClass), dexKitTargets.getTransitUpdateBackground()));
-        candidates.add(new HookCandidate("Md5FileNameGenerator.generate", resolveDeclaringClass(dexKitTargets.getGlideTokenGenerate()), dexKitTargets.getGlideTokenGenerate()));
-        candidates.add(new HookCandidate("DiskLruCacheWrapper.get", resolveDeclaringClass(dexKitTargets.getGlideDiskCacheGet(), dexKitTargets.getGlideDiskCacheWrapperClass()), dexKitTargets.getGlideDiskCacheGet()));
-        candidates.add(new HookCandidate("DiskLruCacheWrapper.put", resolveDeclaringClass(dexKitTargets.getGlideDiskCachePut(), dexKitTargets.getGlideDiskCacheWrapperClass()), dexKitTargets.getGlideDiskCachePut()));
-        Method diskRemoveMethod = null;
-        Class<?> diskCacheWrapperClass = dexKitTargets.getGlideDiskCacheWrapperClass();
-        if (diskCacheWrapperClass != null) {
-            Class<?> diskLruCacheClass = DiskLruCacheReflector.resolveDiskLruCacheClass(diskCacheWrapperClass);
-            if (diskLruCacheClass != null) {
-                diskRemoveMethod = HookReflectionUtils.findMethodBySignature(diskLruCacheClass, Boolean.TYPE, String.class);
-            }
-        }
-        candidates.add(new HookCandidate("DiskLruCache.remove", resolveDeclaringClass(diskRemoveMethod), diskRemoveMethod));
-        candidates.add(new HookCandidate("MifareModel.queryDoorCardInfo", resolveDeclaringClass(dexKitTargets.getMifareQuery()), dexKitTargets.getMifareQuery()));
-        // Engine memory-cache lookup hook: located by shape inside the Engine class. Delegate
-        // to MemoryCacheHookRegistrar so the troubleshoot page and the installer agree on
-        // which method gets hooked (no duplicated selection rules).
-        Class<?> engineClass = dexKitTargets.getGlideEngineClass();
-        Method engineLoadFromCacheMethod = engineClass != null
-                ? MemoryCacheHookRegistrar.findLoadFromCacheMethod(engineClass)
-                : null;
-        candidates.add(new HookCandidate(
-                "Engine.loadFromCache",
-                engineLoadFromCacheMethod != null ? engineLoadFromCacheMethod.getDeclaringClass() : engineClass,
-                engineLoadFromCacheMethod
-        ));
+    private String buildHookMethodList() {
+        Map<HookCatalog, Method> installed = mSupport.snapshotInstalledMethodsByCatalog();
+        HookCatalog[] entries = HookCatalog.values();
         StringBuilder builder = new StringBuilder();
-        for (int index = 0; index < candidates.size(); index++) {
-            HookCandidate candidate = candidates.get(index);
+        for (int index = 0; index < entries.length; index++) {
+            HookCatalog entry = entries[index];
+            Method method = installed.get(entry);
             if (index > 0) {
                 // Blank line between blocks; TroubleshootFragment.buildHookMethodSpans splits
                 // on "\n\n" to color each entry independently.
@@ -137,12 +92,12 @@ public final class HookDebugReporter {
             builder.append('[')
                     .append(index + 1)
                     .append(']')
-                    .append(candidate.label)
+                    .append(entry.getLabel())
                     .append('\n')
-                    .append(candidate.ownerClass != null ? candidate.ownerClass.getName() : "(void*)0")
+                    .append(method != null ? method.getDeclaringClass().getName() : MISSING_PLACEHOLDER)
                     .append('\n')
                     .append("= ")
-                    .append(candidate.method != null ? buildMethodDescriptor(candidate.method) : "(void*)0");
+                    .append(method != null ? buildMethodDescriptor(method) : MISSING_PLACEHOLDER);
         }
         return builder.toString();
     }
@@ -170,14 +125,6 @@ public final class HookDebugReporter {
             return "x86";
         }
         return rawAbi;
-    }
-
-    private Class<?> resolveDeclaringClass(Method method) {
-        return method != null ? method.getDeclaringClass() : null;
-    }
-
-    private Class<?> resolveDeclaringClass(Method method, Class<?> fallbackClass) {
-        return method != null ? method.getDeclaringClass() : fallbackClass;
     }
 
     @NonNull
@@ -229,17 +176,5 @@ public final class HookDebugReporter {
             return "D";
         }
         return "L" + type.getName().replace('.', '/') + ";";
-    }
-
-    private static final class HookCandidate {
-        final String label;
-        final Class<?> ownerClass;
-        final Method method;
-
-        HookCandidate(@NonNull String label, Class<?> ownerClass, Method method) {
-            this.label = label;
-            this.ownerClass = ownerClass;
-            this.method = method;
-        }
     }
 }

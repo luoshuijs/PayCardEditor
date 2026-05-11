@@ -7,7 +7,9 @@ import androidx.annotation.NonNull;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.github.libxposed.api.XposedModule;
 
@@ -43,9 +45,9 @@ public final class HookInstallerSupport {
         }
     }
 
-    public void recordInstalledHook(@NonNull String label, @NonNull Method method) {
+    public void recordInstalledHook(@NonNull HookCatalog entry, @NonNull Method method) {
         synchronized (mInstalledHookRecords) {
-            mInstalledHookRecords.add(new HookRecord(label, method));
+            mInstalledHookRecords.add(new HookRecord(entry, method));
         }
     }
 
@@ -55,17 +57,37 @@ public final class HookInstallerSupport {
         }
     }
 
+    /**
+     * Snapshot of "which hook was installed against which method", keyed by the
+     * catalog entry. Used by {@link com.luoshui.paycardeditor.hook.debug.HookDebugReporter}
+     * to render the troubleshoot page without maintaining its own candidate list.
+     *
+     * <p>The map only contains entries for hooks that were actually installed.
+     * Missing keys mean the hook was not installed and should render as
+     * {@code (void*)0} on the troubleshoot page.</p>
+     */
+    @NonNull
+    public Map<HookCatalog, Method> snapshotInstalledMethodsByCatalog() {
+        synchronized (mInstalledHookRecords) {
+            Map<HookCatalog, Method> snapshot = new HashMap<>(mInstalledHookRecords.size());
+            for (HookRecord record : mInstalledHookRecords) {
+                snapshot.put(record.entry, record.method);
+            }
+            return snapshot;
+        }
+    }
+
     @NonNull
     public List<?> copyCards(@NonNull Collection<?> cards) {
         return new ArrayList<>(cards);
     }
 
     static final class HookRecord {
-        final String label;
+        final HookCatalog entry;
         final Method method;
 
-        HookRecord(@NonNull String label, @NonNull Method method) {
-            this.label = label;
+        HookRecord(@NonNull HookCatalog entry, @NonNull Method method) {
+            this.entry = entry;
             this.method = method;
         }
     }

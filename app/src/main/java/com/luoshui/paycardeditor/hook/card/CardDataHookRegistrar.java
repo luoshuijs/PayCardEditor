@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import com.luoshui.paycardeditor.hook.HookCatalog;
 import com.luoshui.paycardeditor.hook.HookInstallerSupport;
 import com.luoshui.paycardeditor.hook.HookProcessContext;
 import com.luoshui.paycardeditor.hook.HookReflectionUtils;
@@ -51,7 +52,7 @@ public final class CardDataHookRegistrar {
                     });
                     return result;
                 });
-        mSupport.recordInstalledHook("CardInfo.updateInfo", updateInfo);
+        mSupport.recordInstalledHook(HookCatalog.CARD_INFO_UPDATE_INFO, updateInfo);
     }
 
     public void installManagerHooks(
@@ -71,7 +72,7 @@ public final class CardDataHookRegistrar {
                     });
                     return chain.proceed();
                 });
-        mSupport.recordInstalledHook("CardInfoManager.put(CardInfo)", putSingle);
+        mSupport.recordInstalledHook(HookCatalog.CARD_MANAGER_PUT_SINGLE, putSingle);
 
         Method putList = HookReflectionUtils.findOverload(cardInfoManagerClass, "put", parameterTypes ->
                 parameterTypes.length == 1 && List.class.isAssignableFrom(parameterTypes[0]));
@@ -89,12 +90,12 @@ public final class CardDataHookRegistrar {
                     });
                     return chain.proceed();
                 });
-        mSupport.recordInstalledHook("CardInfoManager.put(List)", putList);
+        mSupport.recordInstalledHook(HookCatalog.CARD_MANAGER_PUT_LIST, putList);
 
-        installManagerCollectionHook(cardInfoManagerClass, cacheLauncherClass, "getAll", true, "CardInfoManager.getAll");
-        installManagerCollectionHook(cardInfoManagerClass, cacheLauncherClass, "getBankCards", false, "CardInfoManager.getBankCards");
-        installManagerCollectionHook(cardInfoManagerClass, cacheLauncherClass, "getIssuedTransCards", false, "CardInfoManager.getIssuedTransCards");
-        installManagerCollectionHook(cardInfoManagerClass, cacheLauncherClass, "getMifareCards", false, "CardInfoManager.getMifareCards");
+        installManagerCollectionHook(cardInfoManagerClass, cacheLauncherClass, "getAll", true, HookCatalog.CARD_MANAGER_GET_ALL);
+        installManagerCollectionHook(cardInfoManagerClass, cacheLauncherClass, "getBankCards", false, HookCatalog.CARD_MANAGER_GET_BANK);
+        installManagerCollectionHook(cardInfoManagerClass, cacheLauncherClass, "getIssuedTransCards", false, HookCatalog.CARD_MANAGER_GET_ISSUED);
+        installManagerCollectionHook(cardInfoManagerClass, cacheLauncherClass, "getMifareCards", false, HookCatalog.CARD_MANAGER_GET_MIFARE);
     }
 
     public void installBankHooks(@NonNull DexKitHookTargets dexKitTargets) {
@@ -110,7 +111,7 @@ public final class CardDataHookRegistrar {
                     mSupport.runHookSideEffect("i6.e.O", () -> patchAndMergeCard(chain.getArg(0), "i6.e.O"));
                     return result;
                 });
-        mSupport.recordInstalledHook("BankCardInfo.mergeVirtualCardInfo", mergeVirtualCardInfo);
+        mSupport.recordInstalledHook(HookCatalog.BANK_MERGE_VIRTUAL, mergeVirtualCardInfo);
 
         Method mergeQueryPanInfo = dexKitTargets.getBankQueryPanMerge();
         if (mergeQueryPanInfo == null) {
@@ -124,7 +125,7 @@ public final class CardDataHookRegistrar {
                     mSupport.runHookSideEffect("i6.e.N", () -> patchAndMergeCard(chain.getArg(0), "i6.e.N"));
                     return result;
                 });
-        mSupport.recordInstalledHook("BankCardInfo.mergeQueryPanInfo", mergeQueryPanInfo);
+        mSupport.recordInstalledHook(HookCatalog.BANK_MERGE_QUERY_PAN, mergeQueryPanInfo);
     }
 
     public void installTransitHooks(
@@ -142,7 +143,7 @@ public final class CardDataHookRegistrar {
                     mSupport.runHookSideEffect("CardInfo.updateBackground", () -> patchAndMergeCard(chain.getThisObject(), "CardInfo.updateBackground"));
                     return result;
                 });
-        mSupport.recordInstalledHook("CardInfo.updateBackground", updateBackground);
+        mSupport.recordInstalledHook(HookCatalog.CARD_INFO_UPDATE_BACKGROUND, updateBackground);
     }
 
     public void installMifareHooks(@NonNull DexKitHookTargets dexKitTargets) {
@@ -159,7 +160,7 @@ public final class CardDataHookRegistrar {
                     mSupport.runHookSideEffect("g6.c.o#result", () -> mergeUnknownPayload(result, "g6.c.o#result"));
                     return result;
                 });
-        mSupport.recordInstalledHook("MifareModel.queryDoorCardInfo", mifareQuery);
+        mSupport.recordInstalledHook(HookCatalog.MIFARE_QUERY_DOOR, mifareQuery);
     }
 
     private void installManagerCollectionHook(
@@ -167,8 +168,9 @@ public final class CardDataHookRegistrar {
             @NonNull Class<?> cacheLauncherClass,
             @NonNull String methodName,
             boolean replace,
-            @NonNull String label
+            @NonNull HookCatalog entry
     ) throws NoSuchMethodException {
+        String label = entry.getLabel();
         Method method = cardInfoManagerClass.getDeclaredMethod(methodName, cacheLauncherClass);
         mSupport.prepareMethod(method, label);
         mModule.hook(method)
@@ -188,7 +190,7 @@ public final class CardDataHookRegistrar {
                     });
                     return result;
                 });
-        mSupport.recordInstalledHook(label, method);
+        mSupport.recordInstalledHook(entry, method);
     }
 
     private void applyRules(@NonNull Collection<?> cards) {

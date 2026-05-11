@@ -73,7 +73,7 @@ final class PayCardHookInstaller {
                 anyInstalled |= installHookGroup("Memory cache hooks", () -> mMemoryCacheHooks.installMemoryHooks(dexKitTargets));
                 anyInstalled |= installHookGroup("Transit hooks", () -> mCardDataHooks.installTransitHooks(cardInfoClass, dexKitTargets));
                 anyInstalled |= installHookGroup("Mifare hooks", () -> mCardDataHooks.installMifareHooks(dexKitTargets));
-                mDebugReporter.publishTroubleshootState(apkPath, cardInfoClass, cardInfoManagerClass, cacheLauncherClass, dexKitTargets);
+                mDebugReporter.publishTroubleshootState(apkPath);
 
                 mInstalled = anyInstalled;
                 if (anyInstalled) {

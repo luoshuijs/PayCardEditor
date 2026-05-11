@@ -5,7 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.luoshui.paycardeditor.hook.debug.HookDebugReporter;
+import com.luoshui.paycardeditor.hook.HookCatalog;
 import com.luoshui.paycardeditor.hook.HookInstallerSupport;
 import com.luoshui.paycardeditor.hook.dexkit.DexKitHookTargets;
 
@@ -103,7 +103,7 @@ public final class MemoryCacheHookRegistrar {
                         }
                         return chain.proceed();
                     });
-            mSupport.recordInstalledHook("Engine.loadFromCache", loadFromCacheMethod);
+            mSupport.recordInstalledHook(HookCatalog.GLIDE_ENGINE_LOAD_FROM_CACHE, loadFromCacheMethod);
             mModule.log(Log.INFO, TAG, "Engine memory lookup hook installed: "
                     + engineClass.getName() + '#' + loadFromCacheMethod.getName()
                     + describeSignature(loadFromCacheMethod));
@@ -118,11 +118,8 @@ public final class MemoryCacheHookRegistrar {
      * parameters where param[1] is {@code boolean} and param[2] is {@code long}. The first
      * parameter type (EngineKey) is unique within Engine and doesn't need to be named
      * because no other private method on Engine shares this signature pattern in Glide v4.
-     *
-     * <p>Package-private so {@link HookDebugReporter} can surface the resolved method on the
-     * troubleshoot page without duplicating the shape rules.
      */
-    public static @Nullable Method findLoadFromCacheMethod(@NonNull Class<?> engineClass) {
+    private static @Nullable Method findLoadFromCacheMethod(@NonNull Class<?> engineClass) {
         Method best = null;
         for (Method method : engineClass.getDeclaredMethods()) {
             if (method.getParameterCount() != 3) {

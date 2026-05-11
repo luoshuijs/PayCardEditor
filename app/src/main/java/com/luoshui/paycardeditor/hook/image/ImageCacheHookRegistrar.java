@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.luoshui.paycardeditor.hook.HookCatalog;
 import com.luoshui.paycardeditor.hook.HookInstallerSupport;
 import com.luoshui.paycardeditor.hook.HookProcessContext;
 import com.luoshui.paycardeditor.hook.HookReflectionUtils;
@@ -124,7 +125,7 @@ public final class ImageCacheHookRegistrar {
                         }
                         return result;
                     });
-            mSupport.recordInstalledHook("Md5FileNameGenerator.generate", generateToken);
+            mSupport.recordInstalledHook(HookCatalog.GLIDE_TOKEN_GENERATE, generateToken);
         } catch (Throwable throwable) {
             mModule.log(Log.WARN, TAG, "Glide token hook install failed: " + Log.getStackTraceString(throwable));
         }
@@ -169,7 +170,7 @@ public final class ImageCacheHookRegistrar {
                     }
                     return chain.proceed();
                 });
-        mSupport.recordInstalledHook("DiskLruCacheWrapper.get", finalGetFromDiskCache);
+        mSupport.recordInstalledHook(HookCatalog.GLIDE_DISK_GET, finalGetFromDiskCache);
 
         Method finalPutToDiskCache = putToDiskCache;
         mSupport.prepareMethod(finalPutToDiskCache, "DiskLruCacheWrapper.put");
@@ -183,7 +184,7 @@ public final class ImageCacheHookRegistrar {
                     }
                     return chain.proceed();
                 });
-        mSupport.recordInstalledHook("DiskLruCacheWrapper.put", finalPutToDiskCache);
+        mSupport.recordInstalledHook(HookCatalog.GLIDE_DISK_PUT, finalPutToDiskCache);
     }
 
     private void installDiskCacheRemoveHook(@NonNull Class<?> diskCacheWrapperClass) {
@@ -209,7 +210,7 @@ public final class ImageCacheHookRegistrar {
                         }
                         return chain.proceed();
                     });
-            mSupport.recordInstalledHook("DiskLruCache.remove", removeMethod);
+            mSupport.recordInstalledHook(HookCatalog.GLIDE_DISK_REMOVE, removeMethod);
         } catch (Throwable throwable) {
             mModule.log(Log.WARN, TAG, "DiskLruCache remove hook install failed: " + Log.getStackTraceString(throwable));
         }
