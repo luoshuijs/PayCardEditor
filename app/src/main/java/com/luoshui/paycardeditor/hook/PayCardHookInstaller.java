@@ -59,7 +59,7 @@ final class PayCardHookInstaller {
                 anyInstalled |= installHookGroup("CardInfoManager hooks", () -> mCardDataHooks.installManagerHooks(cardInfoClass, cardInfoManagerClass, cacheLauncherClass));
                 anyInstalled |= installHookGroup("Bank data hooks", () -> mCardDataHooks.installBankHooks(dexKitTargets));
                 anyInstalled |= installHookGroup("Image cache hooks", () -> mImageCacheHooks.installImageHooks(dexKitTargets));
-                anyInstalled |= installHookGroup("Memory cache hooks", () -> mMemoryCacheHooks.installMemoryHooks(classLoader));
+                anyInstalled |= installHookGroup("Memory cache hooks", () -> mMemoryCacheHooks.installMemoryHooks(dexKitTargets));
                 anyInstalled |= installHookGroup("Transit hooks", () -> mCardDataHooks.installTransitHooks(cardInfoClass, dexKitTargets));
                 anyInstalled |= installHookGroup("Mifare hooks", () -> mCardDataHooks.installMifareHooks(dexKitTargets));
                 mDebugReporter.publishTroubleshootState(apkPath, cardInfoClass, cardInfoManagerClass, cacheLauncherClass, dexKitTargets, mImageCacheHooks);

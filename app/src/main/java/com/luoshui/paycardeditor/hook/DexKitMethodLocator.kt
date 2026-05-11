@@ -18,6 +18,10 @@ internal data class DexKitHookTargets(
     val glideDiskCacheWrapperClass: Class<*>? = null,
     val glideDiskCacheGet: Method? = null,
     val glideDiskCachePut: Method? = null,
+    val glideEngineClass: Class<*>? = null,
+    val glideActiveResourcesClass: Class<*>? = null,
+    val glideMemoryCacheInterface: Class<*>? = null,
+    val glideKeyInterface: Class<*>? = null,
 )
 
 /**
@@ -36,6 +40,10 @@ internal data class DexKitTargetDescriptors(
     val glideDiskCacheWrapperClass: String? = null,
     val glideDiskCacheGet: String? = null,
     val glideDiskCachePut: String? = null,
+    val glideEngineClass: String? = null,
+    val glideActiveResourcesClass: String? = null,
+    val glideMemoryCacheInterface: String? = null,
+    val glideKeyInterface: String? = null,
 ) {
     /** Returns true when no descriptor was produced; treated as a cache-miss sentinel. */
     fun isEmpty(): Boolean = bankVirtualCardMerge == null &&
@@ -45,7 +53,11 @@ internal data class DexKitTargetDescriptors(
         glideTokenGenerate == null &&
         glideDiskCacheWrapperClass == null &&
         glideDiskCacheGet == null &&
-        glideDiskCachePut == null
+        glideDiskCachePut == null &&
+        glideEngineClass == null &&
+        glideActiveResourcesClass == null &&
+        glideMemoryCacheInterface == null &&
+        glideKeyInterface == null
 
     fun toJson(): JSONObject = JSONObject().apply {
         putOpt(KEY_BANK_VIRTUAL_CARD_MERGE, bankVirtualCardMerge)
@@ -56,6 +68,10 @@ internal data class DexKitTargetDescriptors(
         putOpt(KEY_GLIDE_DISK_CACHE_WRAPPER_CLASS, glideDiskCacheWrapperClass)
         putOpt(KEY_GLIDE_DISK_CACHE_GET, glideDiskCacheGet)
         putOpt(KEY_GLIDE_DISK_CACHE_PUT, glideDiskCachePut)
+        putOpt(KEY_GLIDE_ENGINE_CLASS, glideEngineClass)
+        putOpt(KEY_GLIDE_ACTIVE_RESOURCES_CLASS, glideActiveResourcesClass)
+        putOpt(KEY_GLIDE_MEMORY_CACHE_INTERFACE, glideMemoryCacheInterface)
+        putOpt(KEY_GLIDE_KEY_INTERFACE, glideKeyInterface)
     }
 
     companion object {
@@ -67,6 +83,10 @@ internal data class DexKitTargetDescriptors(
         private const val KEY_GLIDE_DISK_CACHE_WRAPPER_CLASS = "glideDiskCacheWrapperClass"
         private const val KEY_GLIDE_DISK_CACHE_GET = "glideDiskCacheGet"
         private const val KEY_GLIDE_DISK_CACHE_PUT = "glideDiskCachePut"
+        private const val KEY_GLIDE_ENGINE_CLASS = "glideEngineClass"
+        private const val KEY_GLIDE_ACTIVE_RESOURCES_CLASS = "glideActiveResourcesClass"
+        private const val KEY_GLIDE_MEMORY_CACHE_INTERFACE = "glideMemoryCacheInterface"
+        private const val KEY_GLIDE_KEY_INTERFACE = "glideKeyInterface"
 
         fun fromJson(json: JSONObject?): DexKitTargetDescriptors {
             if (json == null) return DexKitTargetDescriptors()
@@ -79,6 +99,10 @@ internal data class DexKitTargetDescriptors(
                 glideDiskCacheWrapperClass = json.optStringOrNull(KEY_GLIDE_DISK_CACHE_WRAPPER_CLASS),
                 glideDiskCacheGet = json.optStringOrNull(KEY_GLIDE_DISK_CACHE_GET),
                 glideDiskCachePut = json.optStringOrNull(KEY_GLIDE_DISK_CACHE_PUT),
+                glideEngineClass = json.optStringOrNull(KEY_GLIDE_ENGINE_CLASS),
+                glideActiveResourcesClass = json.optStringOrNull(KEY_GLIDE_ACTIVE_RESOURCES_CLASS),
+                glideMemoryCacheInterface = json.optStringOrNull(KEY_GLIDE_MEMORY_CACHE_INTERFACE),
+                glideKeyInterface = json.optStringOrNull(KEY_GLIDE_KEY_INTERFACE),
             )
         }
 
@@ -126,6 +150,10 @@ internal object DexKitMethodLocator {
                     glideDiskCacheWrapperClass = glide.diskCacheWrapperClass,
                     glideDiskCacheGet = glide.diskCacheGet,
                     glideDiskCachePut = glide.diskCachePut,
+                    glideEngineClass = glide.engineClass,
+                    glideActiveResourcesClass = glide.activeResourcesClass,
+                    glideMemoryCacheInterface = glide.memoryCacheInterface,
+                    glideKeyInterface = glide.keyInterface,
                 )
             }
         }.onFailure {
@@ -155,6 +183,10 @@ internal object DexKitMethodLocator {
             glideDiskCacheWrapperClass = descriptors.glideDiskCacheWrapperClass.toClassOrNull(classLoader, module, "glideDiskCacheWrapperClass"),
             glideDiskCacheGet = descriptors.glideDiskCacheGet.toMethodOrNull(classLoader, module, "glideDiskCacheGet"),
             glideDiskCachePut = descriptors.glideDiskCachePut.toMethodOrNull(classLoader, module, "glideDiskCachePut"),
+            glideEngineClass = descriptors.glideEngineClass.toClassOrNull(classLoader, module, "glideEngineClass"),
+            glideActiveResourcesClass = descriptors.glideActiveResourcesClass.toClassOrNull(classLoader, module, "glideActiveResourcesClass"),
+            glideMemoryCacheInterface = descriptors.glideMemoryCacheInterface.toClassOrNull(classLoader, module, "glideMemoryCacheInterface"),
+            glideKeyInterface = descriptors.glideKeyInterface.toClassOrNull(classLoader, module, "glideKeyInterface"),
         )
         module.log(
             Log.INFO,
@@ -166,7 +198,11 @@ internal object DexKitMethodLocator {
                 "token=${targets.glideTokenGenerate?.declaringClass?.name}.${targets.glideTokenGenerate?.name}, " +
                 "diskCache=${targets.glideDiskCacheWrapperClass?.name}, " +
                 "diskGet=${targets.glideDiskCacheGet?.declaringClass?.name}.${targets.glideDiskCacheGet?.name}, " +
-                "diskPut=${targets.glideDiskCachePut?.declaringClass?.name}.${targets.glideDiskCachePut?.name}"
+                "diskPut=${targets.glideDiskCachePut?.declaringClass?.name}.${targets.glideDiskCachePut?.name}, " +
+                "engine=${targets.glideEngineClass?.name}, " +
+                "active=${targets.glideActiveResourcesClass?.name}, " +
+                "memCache=${targets.glideMemoryCacheInterface?.name}, " +
+                "key=${targets.glideKeyInterface?.name}"
         )
         return targets
     }
@@ -187,6 +223,10 @@ internal object DexKitMethodLocator {
         if (descriptors.glideDiskCacheWrapperClass != null && targets.glideDiskCacheWrapperClass == null) return false
         if (descriptors.glideDiskCacheGet != null && targets.glideDiskCacheGet == null) return false
         if (descriptors.glideDiskCachePut != null && targets.glideDiskCachePut == null) return false
+        if (descriptors.glideEngineClass != null && targets.glideEngineClass == null) return false
+        if (descriptors.glideActiveResourcesClass != null && targets.glideActiveResourcesClass == null) return false
+        if (descriptors.glideMemoryCacheInterface != null && targets.glideMemoryCacheInterface == null) return false
+        if (descriptors.glideKeyInterface != null && targets.glideKeyInterface == null) return false
         return true
     }
 
@@ -195,6 +235,10 @@ internal object DexKitMethodLocator {
         val diskCacheWrapperClass: String? = null,
         val diskCacheGet: String? = null,
         val diskCachePut: String? = null,
+        val engineClass: String? = null,
+        val activeResourcesClass: String? = null,
+        val memoryCacheInterface: String? = null,
+        val keyInterface: String? = null,
     )
 
     private fun findBankVirtualCardMerge(bridge: DexKitBridge): String? =
@@ -357,11 +401,44 @@ internal object DexKitMethodLocator {
         val diskCacheWrapperDescriptor = diskCacheWrapperClassData?.toDexClass()?.serialize()
             ?: diskCacheGet?.declaredClass?.toDexClass()?.serialize()
             ?: diskCachePut?.declaredClass?.toDexClass()?.serialize()
+
+        // Glide's memory cache hooks rely on identifying Engine + ActiveResources by
+        // string-fingerprint, then deriving the MemoryCache / Key interfaces from API
+        // shape at runtime (Engine.<init>'s 1st parameter is MemoryCache; MemoryCache.get's
+        // 1st parameter is Key). Hardcoding R8-renamed names like `n3.g` / `k3.f` would
+        // break on every host APK rebuild, mirroring the disk cache strategy used above.
+        //
+        // String fingerprints (Glide v4, host APK 9.21.0.001 verified, see jadx):
+        //   * "Started new load"           -> com.bumptech.glide.load.engine.Engine (only)
+        //   * "glide-active-resources"     -> com.bumptech.glide.load.engine.ActiveResources
+        //                                    (used as the worker thread name)
+        // Both strings appear exactly once in classes.dex and are kept verbatim by Glide
+        // across releases, making them stable indices into the obfuscated class table.
+        val engineClassDescriptor = bridge.findClass {
+            matcher {
+                usingStrings("Started new load", "Loaded resource from cache")
+            }
+        }.singleOrNull()?.toDexClass()?.serialize()
+        val activeResourcesClassDescriptor = bridge.findClass {
+            matcher {
+                usingStrings("glide-active-resources")
+            }
+        }.singleOrNull()?.toDexClass()?.serialize()
+
         return GlideDescriptors(
             tokenGenerate = tokenGenerate?.toDexMethod()?.serialize(),
             diskCacheWrapperClass = diskCacheWrapperDescriptor,
             diskCacheGet = diskCacheGet?.toDexMethod()?.serialize(),
             diskCachePut = diskCachePut?.toDexMethod()?.serialize(),
+            engineClass = engineClassDescriptor,
+            activeResourcesClass = activeResourcesClassDescriptor,
+            // MemoryCache / Key interfaces are derived from the API shape of [engineClass]
+            // at hook install time (see MemoryCacheHookRegistrar.deriveInterfacesFromEngine).
+            // DexKit cannot stably fingerprint interfaces (no method bodies, no strings) but
+            // the relationship "Engine.<init> first param = MemoryCache; MemoryCache.get first
+            // param = Key" is part of Glide's public-facing API surface and won't shift.
+            memoryCacheInterface = null,
+            keyInterface = null,
         )
     }
 
