@@ -127,7 +127,8 @@ internal object DexKitMethodLocator {
             return DexKitTargetDescriptors()
         }
         return runCatching {
-            DexKitBridge.create(apkPath).use { bridge ->
+            val bridge = DexKitBridge.create(apkPath)
+            try {
                 val glide = findGlideDescriptors(bridge)
                 DexKitTargetDescriptors(
                     bankVirtualCardMerge = findBankVirtualCardMerge(bridge),
@@ -140,6 +141,12 @@ internal object DexKitMethodLocator {
                     glideDiskCachePut = glide.diskCachePut,
                     glideEngineClass = glide.engineClass,
                 )
+            } finally {
+                // DexKit 2.2.0 can signal a query future before its worker releases the
+                // scheduler. Closing here may then destroy the pool on that worker and
+                // abort while it tries to join itself. A full scan occurs at most once per
+                // process, so retaining the bridge trades bounded memory for process safety.
+                DexKitBridgeLifetime.retain(bridge)
             }
         }.onFailure {
             module.log(Log.WARN, TAG, "DexKit lookup failed: ${it.stackTraceToString()}")
