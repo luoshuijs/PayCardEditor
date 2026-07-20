@@ -1,52 +1,57 @@
 package com.luoshui.paycardeditor.feature.settings
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.luoshui.paycardeditor.R
-import com.luoshui.paycardeditor.databinding.ActivitySettingsBinding
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.luoshui.paycardeditor.app.App
+import com.luoshui.paycardeditor.app.theme.PayCardThemedContent
+import com.luoshui.paycardeditor.feature.studio.CropConfig
 
-class SettingsActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivitySettingsBinding
+/**
+ * Settings entry Activity.
+ *
+ * Owns only Compose wiring. [PayCardThemedContent] manages theme and
+ * edge-to-edge behavior, while [SettingsViewModel] bridges theme settings from
+ * [App.settingsRepository] and crop settings from [CropConfig]. Crop settings
+ * intentionally remain in the shared `paycardeditor_state` SharedPreferences.
+ */
+class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
-        binding = ActivitySettingsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = getString(R.string.settings_title)
-        binding.toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
-
-        setupWindowInsets()
-
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.settings_fragment_container, SettingsFragment())
-                .commit()
-        }
-    }
-
-    private fun setupWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v, insets ->
-            val bars = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
-            )
-            v.setPadding(v.paddingLeft, bars.top, v.paddingRight, v.paddingBottom)
-            insets
-        }
-
-        ViewCompat.setOnApplyWindowInsetsListener(binding.settingsFragmentContainer) { v, insets ->
-            val bars = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
-            )
-            v.setPadding(bars.left, 0, bars.right, bars.bottom)
-            insets
+        setContent {
+            PayCardThemedContent {
+                val app = applicationContext as App
+                val context = this@SettingsActivity
+                val viewModel: SettingsViewModel = viewModel(
+                    factory = viewModelFactory {
+                        initializer {
+                            SettingsViewModel(
+                                settingsRepository = app.settingsRepository,
+                                cropConfigReader = {
+                                    val v = CropConfig.load(context)
+                                    CropValues(v.aspectX, v.aspectY, v.maxWidth, v.maxHeight)
+                                },
+                                cropConfigWriter = { x, y, w, h ->
+                                    CropConfig.save(context, CropConfig.Values(x, y, w, h))
+                                },
+                            )
+                        }
+                    }
+                )
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                SettingsScreen(
+                    uiState = uiState,
+                    onEvent = viewModel::handleEvent,
+                    onBack = { finish() },
+                    errorEvents = viewModel.errorEvents,
+                )
+            }
         }
     }
 }

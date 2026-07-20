@@ -61,6 +61,7 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
         <item name="android:windowLightNavigationBar">?attr/isLightTheme</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
 
         <!-- Component overrides -->
         <item name="bottomNavigationStyle">@style/Widget.PayCardEditor.BottomNavigation</item>

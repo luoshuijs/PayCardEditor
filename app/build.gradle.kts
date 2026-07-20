@@ -3,6 +3,7 @@ import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
 }
 
 fun getKeystoreProperties(): Properties? {
@@ -95,8 +96,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
-        viewBinding = true
         buildConfig = true
+        compose = true
     }
     packaging {
         jniLibs {
@@ -105,6 +106,9 @@ android {
         resources {
             merges += "META-INF/xposed/*"
         }
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
@@ -123,20 +127,46 @@ androidComponents {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.recyclerview)
     implementation(libs.ucrop)
     // Override the OkHttp 3.12.13 brought in transitively by uCrop with a
     // maintained 5.x release. R8 tree-shakes the unused parts so the on-disk
     // cost is negligible (verified: 195 bytes of okhttp3 in dex).
     implementation(libs.okhttp)
-    implementation(libs.glide)
     implementation(libs.dexkit)
+
+    // Compose
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.material.kolor)
+
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // DataStore and coroutines
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.coroutines.android)
+
+    // Navigation Compose and Coil
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.coil.compose)
+
     compileOnly(libs.libxposed.api)
     implementation(libs.libxposed.service)
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

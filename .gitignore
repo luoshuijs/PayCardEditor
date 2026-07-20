@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+.project
+.settings
+.classpath
+.settings/
+.settings/*.*
+.kotlin/

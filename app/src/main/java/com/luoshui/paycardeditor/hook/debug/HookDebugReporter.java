@@ -85,7 +85,7 @@ public final class HookDebugReporter {
             HookCatalog entry = entries[index];
             Method method = installed.get(entry);
             if (index > 0) {
-                // Blank line between blocks; TroubleshootFragment.buildHookMethodSpans splits
+                // Blank line between blocks; TroubleshootScreen.buildHookMethodsAnnotated splits
                 // on "\n\n" to color each entry independently.
                 builder.append("\n\n");
             }

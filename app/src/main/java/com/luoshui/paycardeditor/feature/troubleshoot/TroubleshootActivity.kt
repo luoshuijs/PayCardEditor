@@ -1,61 +1,71 @@
 package com.luoshui.paycardeditor.feature.troubleshoot
 
-import com.luoshui.paycardeditor.R
-
-
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.luoshui.paycardeditor.databinding.ActivityTroubleshootBinding
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.luoshui.paycardeditor.app.theme.PayCardThemedContent
+import com.luoshui.paycardeditor.data.ModuleStateRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class TroubleshootActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityTroubleshootBinding
+/**
+ * Troubleshooting entry Activity.
+ *
+ * Owns only Compose wiring. [PayCardThemedContent] manages theme and
+ * edge-to-edge behavior, and [TroubleshootViewModel] reads troubleshooting
+ * state from [ModuleStateRepository] on the IO dispatcher because the repository
+ * performs synchronous SharedPreferences reads. The lifecycle observer refreshes
+ * on resume while the Activity ViewModelStore preserves state across configuration changes.
+ */
+class TroubleshootActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Modern edge-to-edge — system bars stay transparent and the icon
-        // appearance follows ?attr/isLightTheme.
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        setContent {
+            PayCardThemedContent {
+                val viewModel: TroubleshootViewModel = viewModel(
+                    factory = viewModelFactory {
+                        initializer {
+                            TroubleshootViewModel(
+                                stateReader = {
+                                    // ModuleStateRepository is synchronous, so the injected reader switches to IO.
+                                    withContext(Dispatchers.IO) { ModuleStateRepository.loadTroubleshootState() }
+                                },
+                            )
+                        }
+                    }
+                )
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        binding = ActivityTroubleshootBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = getString(R.string.troubleshoot_title)
-        binding.toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+                // Resume refresh is idempotent and may duplicate the ViewModel's initial load.
+                val lifecycleOwner = LocalLifecycleOwner.current
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            viewModel.handleEvent(TroubleshootEvent.Refresh)
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                }
 
-        setupWindowInsets()
-
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.troubleshoot_fragment_container, TroubleshootFragment())
-                .commit()
-        }
-    }
-
-    private fun setupWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v, insets ->
-            val bars = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
-            )
-            v.setPadding(
-                v.paddingLeft,
-                bars.top,
-                v.paddingRight,
-                v.paddingBottom
-            )
-            insets
-        }
-
-        ViewCompat.setOnApplyWindowInsetsListener(binding.troubleshootFragmentContainer) { v, insets ->
-            val bars = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
-            )
-            v.setPadding(bars.left, 0, bars.right, bars.bottom)
-            insets
+                TroubleshootScreen(
+                    uiState = uiState,
+                    effects = viewModel.effects,
+                    onEvent = viewModel::handleEvent,
+                    onBack = { finish() },
+                    errorEvents = viewModel.errorEvents,
+                )
+            }
         }
     }
 }
