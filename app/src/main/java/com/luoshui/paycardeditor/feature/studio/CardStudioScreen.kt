@@ -1,11 +1,5 @@
 package com.luoshui.paycardeditor.feature.studio
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,36 +26,28 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.luoshui.paycardeditor.R
 import com.luoshui.paycardeditor.data.CardAsset
-import com.luoshui.paycardeditor.data.CardAssetRepository
 import com.luoshui.paycardeditor.ui.EmptyErrorEvents
 import com.luoshui.paycardeditor.ui.UiText
 import com.luoshui.paycardeditor.ui.components.TonalCard
-import com.yalantis.ucrop.UCrop
+import com.luoshui.paycardeditor.ui.components.UiErrorEffect
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.emptyFlow
 import java.io.File
 
 /**
  * Card studio screen.
  *
- * The caller supplies state and events. This screen bridges image picking and
- * UCrop launchers, then reports [CardStudioEvent.CropResult] for persistence.
+ * The caller supplies state and events. [rememberCardStudioCropActions] owns image picking and
+ * uCrop integration, then reports [CardStudioEvent.CropResult] for persistence.
  * [com.luoshui.paycardeditor.ui.components.TonalCard] wraps asset cells and
  * [coil.compose.AsyncImage] loads local asset files.
  *
@@ -78,133 +64,30 @@ fun CardStudioScreen(
     showMessage: (CharSequence) -> Unit,
     modifier: Modifier = Modifier,
     errorEvents: SharedFlow<UiText> = EmptyErrorEvents,
+    effects: Flow<CardStudioEffect> = emptyFlow(),
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val resources = LocalResources.current
+    val cropActions = rememberCardStudioCropActions(onEvent, showMessage)
 
-    // Keep toast collection optional so Compose UI tests can render without a ViewModel.
-    LaunchedEffect(errorEvents) {
-        errorEvents.collect { uiText ->
-            val message = context.getString(uiText.resId, *uiText.args.toTypedArray())
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // pendingCrop links picker, crop, and save callbacks across recompositions.
-    var pendingCrop by remember { mutableStateOf<PendingCrop?>(null) }
-
-    val cropLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult(),
-    ) { result ->
-        val request = pendingCrop
-        if (request == null || result.resultCode != Activity.RESULT_OK) {
-            pendingCrop = null
-            return@rememberLauncherForActivityResult
-        }
-        val data = result.data
-        if (data == null) {
-            pendingCrop = null
-            return@rememberLauncherForActivityResult
-        }
-        val outputUri = UCrop.getOutput(data)
-        // buildUCropIntent assigns outputFile before UCrop launches; fail fast if that contract breaks.
-        val outputFile = File(
-            outputUri?.path ?: request.outputFile?.absolutePath
-                ?: error("PendingCrop.outputFile missing — buildUCropIntent 未填充就触发了 cropLauncher")
-        )
-        coroutineScope.launch {
-            val roundedFile = withContext(Dispatchers.IO) {
-                val rounded = CardAssetRepository.createTempFile("rounded_")
-                CardImageProcessor.makeRoundedPng(outputFile, rounded)
-                rounded
+    UiErrorEffect(errorEvents)
+    LaunchedEffect(effects) {
+        effects.collect { effect ->
+            when (effect) {
+                is CardStudioEffect.ShowMessage -> {
+                    val message = resources.getString(
+                        effect.message.resId,
+                        *effect.message.args.toTypedArray(),
+                    )
+                    showMessage(message)
+                }
             }
-            onEvent(
-                CardStudioEvent.CropResult(
-                    croppedFile = roundedFile,
-                    displayName = request.displayName,
-                    existingAssetId = request.assetId,
-                )
-            )
-            pendingCrop = null
-            showMessage(
-                context.getString(
-                    if (request.assetId == null) {
-                        R.string.asset_saved_message
-                    } else {
-                        R.string.asset_updated_message
-                    },
-                    request.displayName,
-                )
-            )
-        }
-    }
-
-    val pickerLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult(),
-    ) { result ->
-        val request = pendingCrop
-        if (request == null || result.resultCode != Activity.RESULT_OK) {
-            pendingCrop = null
-            return@rememberLauncherForActivityResult
-        }
-        val sourceUri = result.data?.data
-        if (sourceUri == null) {
-            pendingCrop = null
-            return@rememberLauncherForActivityResult
-        }
-        coroutineScope.launch {
-            val intent = withContext(Dispatchers.IO) {
-                buildUCropIntent(context, sourceUri, request)
-            }
-            if (intent == null) {
-                pendingCrop = null
-                showMessage(context.getString(R.string.asset_crop_unavailable_message))
-                return@launch
-            }
-            // buildUCropIntent returns pending crop data with outputFile and displayName resolved.
-            pendingCrop = intent.second
-            cropLauncher.launch(intent.first)
-        }
-    }
-
-    val launchPick: (PendingCrop) -> Unit = { request ->
-        pendingCrop = request
-        val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
-        pickerLauncher.launch(intent)
-    }
-
-    val launchEdit: (CardAsset) -> Unit = { asset ->
-        coroutineScope.launch {
-            val sourceFile = File(asset.absolutePath)
-            if (!sourceFile.exists()) {
-                onEvent(CardStudioEvent.Refresh)
-                showMessage(context.getString(R.string.asset_missing_message))
-                return@launch
-            }
-            val request = PendingCrop(assetId = asset.id, displayName = asset.displayName)
-            val intent = withContext(Dispatchers.IO) {
-                buildUCropIntent(context, Uri.fromFile(sourceFile), request)
-            }
-            if (intent == null) {
-                showMessage(context.getString(R.string.asset_crop_unavailable_message))
-                return@launch
-            }
-            pendingCrop = intent.second
-            cropLauncher.launch(intent.first)
         }
     }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                launchPick(
-                    PendingCrop(
-                        assetId = null,
-                        displayName = context.getString(R.string.asset_default_name),
-                    )
-                )
-            }) {
+            FloatingActionButton(onClick = cropActions.pickNew) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.studio_add_asset))
             }
         },
@@ -224,7 +107,6 @@ fun CardStudioScreen(
             sheet = applySheet,
             onPick = { snapshot ->
                 onEvent(CardStudioEvent.ApplyAssetToSnapshot(applySheet.asset, snapshot))
-                showMessage(context.getString(R.string.rule_saved_message, snapshot.title))
             },
             onDismiss = { onEvent(CardStudioEvent.DismissApplySheet) },
         )
@@ -236,16 +118,11 @@ fun CardStudioScreen(
             asset = actionsSheet.asset,
             onEdit = {
                 onEvent(CardStudioEvent.DismissActionsSheet)
-                launchEdit(actionsSheet.asset)
+                cropActions.edit(actionsSheet.asset)
             },
             onReplace = {
                 onEvent(CardStudioEvent.DismissActionsSheet)
-                launchPick(
-                    PendingCrop(
-                        assetId = actionsSheet.asset.id,
-                        displayName = actionsSheet.asset.displayName,
-                    )
-                )
+                cropActions.replace(actionsSheet.asset)
             },
             onDelete = {
                 onEvent(CardStudioEvent.ConfirmDeleteAsset(actionsSheet.asset))
@@ -260,8 +137,6 @@ fun CardStudioScreen(
             asset = pendingDelete,
             onConfirm = {
                 onEvent(CardStudioEvent.RemoveAsset(pendingDelete))
-                onEvent(CardStudioEvent.DismissDeleteConfirm)
-                showMessage(context.getString(R.string.asset_deleted_message, pendingDelete.displayName))
             },
             onDismiss = { onEvent(CardStudioEvent.DismissDeleteConfirm) },
         )
@@ -530,64 +405,4 @@ private fun DeleteAssetConfirmDialog(
             }
         },
     )
-}
-
-// ----- UCrop intent helper -----
-
-/**
- * Pending crop state shared across image-picker and crop launchers.
- *
- * [outputFile] is null before the picker returns because the destination file
- * cannot be known until [buildUCropIntent] sees the source image. The crop
- * callback asserts non-null output after that helper has assigned it.
- */
-private data class PendingCrop(
-    val assetId: String? = null,
-    val displayName: String = "",
-    val outputFile: File? = null,
-)
-
-/**
- * Builds the UCrop intent and the updated pending crop state.
- *
- * Returns null when no UCrop activity can handle the intent. The returned
- * [PendingCrop] has an assigned [PendingCrop.outputFile] and a display name
- * inferred from the source file when the caller did not provide one.
- */
-private fun buildUCropIntent(
-    context: android.content.Context,
-    sourceUri: Uri,
-    request: PendingCrop,
-): Pair<Intent, PendingCrop>? {
-    val sourceFile = if (sourceUri.scheme == "content") {
-        CardImageProcessor.copyUriToTemp(context, sourceUri)
-    } else {
-        File(checkNotNull(sourceUri.path))
-    }
-    val defaultName = context.getString(R.string.asset_default_name)
-    val displayName = if (request.displayName == defaultName) {
-        CardAssetRepository.inferDisplayName(sourceFile.name)
-    } else {
-        request.displayName
-    }
-    val outputFile = CardAssetRepository.createTempFile("ucrop_")
-    val updated = request.copy(displayName = displayName, outputFile = outputFile)
-
-    val options = UCrop.Options().apply {
-        setCompressionFormat(android.graphics.Bitmap.CompressFormat.PNG)
-        setHideBottomControls(false)
-        setFreeStyleCropEnabled(false)
-        setShowCropGrid(true)
-        setShowCropFrame(true)
-    }
-    val cropConfig = CropConfig.load(context)
-    val intent = UCrop.of(Uri.fromFile(sourceFile), Uri.fromFile(outputFile))
-        .withAspectRatio(cropConfig.aspectX.toFloat(), cropConfig.aspectY.toFloat())
-        .withMaxResultSize(cropConfig.maxWidth, cropConfig.maxHeight)
-        .withOptions(options)
-        .getIntent(context)
-    if (intent.resolveActivity(context.packageManager) == null) {
-        return null
-    }
-    return intent to updated
 }

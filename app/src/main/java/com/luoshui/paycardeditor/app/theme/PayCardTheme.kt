@@ -37,13 +37,18 @@ fun PayCardTheme(
         Color(appearance.keyColorArgb)
     }
 
-    val colorScheme = rememberDynamicColorScheme(
+    val generatedColorScheme = rememberDynamicColorScheme(
         seedColor = seedColor,
         isDark = darkTheme,
         isAmoled = amoled,
         style = paletteStyle,
         specVersion = colorSpec,
     )
+    val colorScheme = if (appearance.colorMode.isMonet) {
+        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        generatedColorScheme
+    }
 
     MaterialTheme(colorScheme = colorScheme) {
         LaunchedEffect(darkTheme) {

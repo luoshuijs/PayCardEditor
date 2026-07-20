@@ -1,6 +1,5 @@
 package com.luoshui.paycardeditor.feature.settings
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,11 +21,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.luoshui.paycardeditor.R
@@ -39,6 +36,7 @@ import com.luoshui.paycardeditor.ui.UiText
 import com.luoshui.paycardeditor.ui.components.SettingsDropdownRow
 import com.luoshui.paycardeditor.ui.components.SettingsNavigationRow
 import com.luoshui.paycardeditor.ui.components.SettingsSection
+import com.luoshui.paycardeditor.ui.components.UiErrorEffect
 import kotlinx.coroutines.flow.SharedFlow
 
 /**
@@ -57,14 +55,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     errorEvents: SharedFlow<UiText> = EmptyErrorEvents,
 ) {
-    val context = LocalContext.current
-    // Keep toast collection optional so Compose UI tests can render without a ViewModel.
-    LaunchedEffect(errorEvents) {
-        errorEvents.collect { uiText ->
-            val message = context.getString(uiText.resId, *uiText.args.toTypedArray())
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
-    }
+    UiErrorEffect(errorEvents)
     Scaffold(
         topBar = {
             TopAppBar(

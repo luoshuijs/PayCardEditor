@@ -297,6 +297,7 @@ private fun CardStudioRoute(
         onEvent = viewModel::handleEvent,
         showMessage = showMessage,
         errorEvents = viewModel.errorEvents,
+        effects = viewModel.effects,
     )
 }
 

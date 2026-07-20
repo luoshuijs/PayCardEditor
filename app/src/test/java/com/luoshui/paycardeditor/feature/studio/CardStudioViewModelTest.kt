@@ -55,6 +55,8 @@ class CardStudioViewModelTest {
         var snapshots: List<CardSnapshot> = emptyList(),
         var customizedSnapshots: Set<CardSnapshot> = emptySet(),
         var deleterShouldThrow: Boolean = false,
+        var saverShouldThrow: Boolean = false,
+        var ruleWriterShouldThrow: Boolean = false,
     ) {
         var saverCalls = 0
         var lastSavedDisplayName: String? = null
@@ -83,6 +85,9 @@ class CardStudioViewModelTest {
         snapshotsReader = { fakes.snapshots },
         assetSaver = { _, name, existingId ->
             fakes.saverCalls += 1
+            if (fakes.saverShouldThrow) {
+                throw RuntimeException("simulated saver failure")
+            }
             fakes.lastSavedDisplayName = name
             fakes.lastSavedExistingId = existingId
             // Return a new asset with a later timestamp to simulate a refreshed version.
@@ -104,6 +109,9 @@ class CardStudioViewModelTest {
         rulesForAssetRemover = { _ -> fakes.rulesRemoverCalls += 1 },
         ruleWriter = { snap, asset ->
             fakes.ruleWriterCalls += 1
+            if (fakes.ruleWriterShouldThrow) {
+                throw RuntimeException("simulated rule writer failure")
+            }
             fakes.lastRuleSnapshot = snap
             fakes.lastRuleAsset = asset
         },
@@ -237,9 +245,106 @@ class CardStudioViewModelTest {
         val fakes = Fakes(snapshots = emptyList())
         val vm = viewModel(fakes)
         advanceUntilIdle()
+        val effects = mutableListOf<CardStudioEffect>()
+        val job = launch { vm.effects.toList(effects) }
         vm.handleEvent(CardStudioEvent.RequestApplyAsset(asset))
         advanceUntilIdle()
+        job.cancel()
         assertNull(vm.uiState.value.applySheet)
+        assertEquals(
+            R.string.no_supported_cards_available,
+            (effects.single() as CardStudioEffect.ShowMessage).message.resId,
+        )
+    }
+
+    @Test
+    fun `CropResult emits success only after saver succeeds`() = runTest {
+        val fakes = Fakes()
+        val vm = viewModel(fakes)
+        advanceUntilIdle()
+        val effects = mutableListOf<CardStudioEffect>()
+        val job = launch { vm.effects.toList(effects) }
+
+        vm.handleEvent(
+            CardStudioEvent.CropResult(
+                croppedFile = File.createTempFile("crop-success-", ".png").also { it.deleteOnExit() },
+                displayName = "新卡面",
+                existingAssetId = null,
+            )
+        )
+        advanceUntilIdle()
+        job.cancel()
+
+        val message = (effects.single() as CardStudioEffect.ShowMessage).message
+        assertEquals(R.string.asset_saved_message, message.resId)
+        assertEquals(listOf("新卡面"), message.args)
+    }
+
+    @Test
+    fun `CropResult failure emits no success effect`() = runTest {
+        val fakes = Fakes(saverShouldThrow = true)
+        val vm = viewModel(fakes)
+        advanceUntilIdle()
+        val effects = mutableListOf<CardStudioEffect>()
+        val job = launch { vm.effects.toList(effects) }
+
+        vm.handleEvent(
+            CardStudioEvent.CropResult(
+                croppedFile = File.createTempFile("crop-failure-", ".png").also { it.deleteOnExit() },
+                displayName = "失败卡面",
+                existingAssetId = null,
+            )
+        )
+        advanceUntilIdle()
+        job.cancel()
+
+        assertTrue(effects.isEmpty())
+    }
+
+    @Test
+    fun `apply and delete emit success after repository operations complete`() = runTest {
+        val asset = makeAsset()
+        val snapshot = makeSnapshot()
+        val fakes = Fakes(assets = listOf(asset), snapshots = listOf(snapshot))
+        val vm = viewModel(fakes)
+        advanceUntilIdle()
+        val effects = mutableListOf<CardStudioEffect>()
+        val job = launch { vm.effects.toList(effects) }
+
+        vm.handleEvent(CardStudioEvent.ApplyAssetToSnapshot(asset, snapshot))
+        vm.handleEvent(CardStudioEvent.RemoveAsset(asset))
+        advanceUntilIdle()
+        job.cancel()
+
+        assertEquals(
+            listOf(R.string.rule_saved_message, R.string.asset_deleted_message),
+            effects.map { (it as CardStudioEffect.ShowMessage).message.resId },
+        )
+    }
+
+    @Test
+    fun `ApplyAssetToSnapshot failure emits error without success effect`() = runTest {
+        val asset = makeAsset()
+        val snapshot = makeSnapshot()
+        val vm = viewModel(
+            Fakes(
+                snapshots = listOf(snapshot),
+                ruleWriterShouldThrow = true,
+            ),
+        )
+        advanceUntilIdle()
+        val effects = mutableListOf<CardStudioEffect>()
+        val errors = mutableListOf<UiText>()
+        val effectsJob = launch { vm.effects.toList(effects) }
+        val errorsJob = launch { vm.errorEvents.toList(errors) }
+
+        vm.handleEvent(CardStudioEvent.ApplyAssetToSnapshot(asset, snapshot))
+        advanceUntilIdle()
+        effectsJob.cancel()
+        errorsJob.cancel()
+
+        assertTrue(effects.isEmpty())
+        assertEquals(R.string.error_apply_rule_failed, errors.single().resId)
     }
 
     @Test
@@ -347,14 +452,20 @@ class CardStudioViewModelTest {
         advanceUntilIdle()
 
         val collected = mutableListOf<UiText>()
+        val effects = mutableListOf<CardStudioEffect>()
         val job = launch { vm.errorEvents.toList(collected) }
+        val effectsJob = launch { vm.effects.toList(effects) }
         advanceUntilIdle()
+        vm.handleEvent(CardStudioEvent.ConfirmDeleteAsset(asset))
         vm.handleEvent(CardStudioEvent.RemoveAsset(asset))
         advanceUntilIdle()
         job.cancel()
+        effectsJob.cancel()
 
         assertEquals("应 emit 一个 error 事件", 1, collected.size)
         assertEquals(R.string.error_remove_asset_failed, collected[0].resId)
+        assertTrue(effects.isEmpty())
+        assertSame(asset, vm.uiState.value.pendingDeleteAsset)
         // The catch path returns before rulesRemover can run.
         assertEquals(0, fakes.rulesRemoverCalls)
     }

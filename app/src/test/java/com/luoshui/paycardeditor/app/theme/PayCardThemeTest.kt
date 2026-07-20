@@ -2,9 +2,11 @@ package com.luoshui.paycardeditor.app.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -62,6 +64,29 @@ class PayCardThemeTest {
         composeTestRule.waitForIdle()
         val surface = checkNotNull(captured.value)
         assertEquals(Color.Black, surface)
+    }
+
+    @Test
+    fun `MONET_LIGHT uses system dynamic scheme and ignores custom seed`() {
+        val actualPrimary = mutableStateOf<Color?>(null)
+        val expectedPrimary = mutableStateOf<Color?>(null)
+        val appearance = AppearanceSettings(
+            colorMode = ColorMode.MONET_LIGHT,
+            keyColorArgb = BrandSeedGold.toArgb(),
+            paletteStyleName = "TonalSpot",
+            colorSpecName = "SPEC_2025",
+        )
+
+        composeTestRule.setContent {
+            expectedPrimary.value = dynamicLightColorScheme(LocalContext.current).primary
+            PayCardTheme(appearance) {
+                actualPrimary.value = MaterialTheme.colorScheme.primary
+                Text("probe")
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        assertEquals(expectedPrimary.value, actualPrimary.value)
     }
 
     @Test

@@ -1,6 +1,5 @@
 package com.luoshui.paycardeditor.feature.home
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,10 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.luoshui.paycardeditor.R
@@ -38,6 +35,7 @@ import com.luoshui.paycardeditor.ui.UiText
 import com.luoshui.paycardeditor.ui.components.StatusTag
 import com.luoshui.paycardeditor.ui.components.StatusTagTone
 import com.luoshui.paycardeditor.ui.components.TonalCard
+import com.luoshui.paycardeditor.ui.components.UiErrorEffect
 import com.luoshui.paycardeditor.ui.components.WarningCard
 import kotlinx.coroutines.flow.SharedFlow
 
@@ -57,14 +55,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     errorEvents: SharedFlow<UiText> = EmptyErrorEvents,
 ) {
-    val context = LocalContext.current
-    // Keep toast collection optional so Compose UI tests can render without a ViewModel.
-    LaunchedEffect(errorEvents) {
-        errorEvents.collect { uiText ->
-            val message = context.getString(uiText.resId, *uiText.args.toTypedArray())
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
-    }
+    UiErrorEffect(errorEvents)
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -83,6 +74,13 @@ fun HomeScreen(
         }
         ActionsCard(onEvent)
         Spacer(Modifier.height(8.dp))
+    }
+
+    uiState.snapshotDetails?.let { state ->
+        HomeSnapshotDetailsDialog(
+            state = state,
+            onDismiss = { onEvent(HomeEvent.DismissSnapshotDetails) },
+        )
     }
 }
 

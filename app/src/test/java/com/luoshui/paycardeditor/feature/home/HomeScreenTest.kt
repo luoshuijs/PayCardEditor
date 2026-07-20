@@ -5,11 +5,13 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.luoshui.paycardeditor.app.theme.PayCardTheme
 import com.luoshui.paycardeditor.model.CardSnapshotState
 import com.luoshui.paycardeditor.model.HomeState
 import com.luoshui.paycardeditor.model.ModuleStatusLevel
 import com.luoshui.paycardeditor.model.ModuleStatusState
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,6 +56,32 @@ class HomeScreenTest {
         )
 
         assertOnlyStatus("未激活", "模块未激活")
+    }
+
+    @Test
+    fun `snapshot details dialog exposes card data and copy action`() {
+        val state = HomeState(
+            moduleStatus = ModuleStatusState(
+                level = ModuleStatusLevel.ACTIVE,
+                title = "模块已激活",
+                detail = "服务已连接",
+            ),
+            cardState = CardSnapshotState(lastSource = "MiPay"),
+        )
+        var dismissed = false
+        rule.setContent {
+            PayCardTheme {
+                HomeScreen(
+                    uiState = HomeUiState(homeState = state, snapshotDetails = state),
+                    onEvent = { dismissed = it == HomeEvent.DismissSnapshotDetails },
+                )
+            }
+        }
+
+        rule.onNodeWithText("当前卡面列表").assertIsDisplayed()
+        rule.onNodeWithText("复制信息").assertIsDisplayed()
+        rule.onNodeWithText("OK").performClick()
+        assertTrue(dismissed)
     }
 
     private fun renderStatus(

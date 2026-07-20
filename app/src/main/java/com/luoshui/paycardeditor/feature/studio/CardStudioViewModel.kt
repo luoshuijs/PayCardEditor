@@ -7,7 +7,10 @@ import com.luoshui.paycardeditor.model.CardSnapshot
 import com.luoshui.paycardeditor.ui.BaseViewModel
 import com.luoshui.paycardeditor.ui.UiText
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -46,6 +49,9 @@ class CardStudioViewModel(
     private val _uiState = MutableStateFlow(CardStudioUiState())
     val uiState: StateFlow<CardStudioUiState> = _uiState.asStateFlow()
 
+    private val _effects = MutableSharedFlow<CardStudioEffect>(extraBufferCapacity = 4)
+    val effects: SharedFlow<CardStudioEffect> = _effects.asSharedFlow()
+
     init {
         viewModelScope.launch { refresh() }
     }
@@ -58,13 +64,25 @@ class CardStudioViewModel(
             CardStudioEvent.PickImage -> Unit
 
             is CardStudioEvent.CropResult -> viewModelScope.launch {
-                try {
+                val savedAsset = try {
                     // Reload after writes so in-memory state matches repository storage.
                     assetSaver(event.croppedFile, event.displayName, event.existingAssetId)
                 } catch (e: Exception) {
                     emitError(UiText(R.string.error_save_asset_failed))
                     return@launch
                 }
+                _effects.emit(
+                    CardStudioEffect.ShowMessage(
+                        UiText(
+                            if (event.existingAssetId == null) {
+                                R.string.asset_saved_message
+                            } else {
+                                R.string.asset_updated_message
+                            },
+                            listOf(savedAsset.displayName),
+                        ),
+                    ),
+                )
                 refresh()
             }
 
@@ -77,6 +95,12 @@ class CardStudioViewModel(
                     emitError(UiText(R.string.error_remove_asset_failed))
                     return@launch
                 }
+                _uiState.value = _uiState.value.copy(pendingDeleteAsset = null)
+                _effects.emit(
+                    CardStudioEffect.ShowMessage(
+                        UiText(R.string.asset_deleted_message, listOf(event.asset.displayName)),
+                    ),
+                )
                 refresh()
             }
 
@@ -84,7 +108,9 @@ class CardStudioViewModel(
                 val mapped = try {
                     val candidates = snapshotsReader()
                     if (candidates.isEmpty()) {
-                        // Leave applySheet null; the screen keeps its existing fallback path.
+                        _effects.emit(
+                            CardStudioEffect.ShowMessage(UiText(R.string.no_supported_cards_available)),
+                        )
                         return@launch
                     }
                     // Query candidate customization before rendering the dialog.
@@ -119,6 +145,11 @@ class CardStudioViewModel(
                     return@launch
                 }
                 _uiState.value = _uiState.value.copy(applySheet = null)
+                _effects.emit(
+                    CardStudioEffect.ShowMessage(
+                        UiText(R.string.rule_saved_message, listOf(event.snapshot.title)),
+                    ),
+                )
                 refresh()
             }
 

@@ -49,18 +49,29 @@ class HomeViewModel(
                     emitError(UiText(R.string.error_sync_home_failed))
                     return@launch
                 }
-                refresh()
+                refresh(showSnapshotDetails = true)
             }
             HomeEvent.Refresh -> viewModelScope.launch { refresh() }
+            HomeEvent.DismissSnapshotDetails -> {
+                mutableUiState.value = mutableUiState.value.copy(snapshotDetails = null)
+            }
             // Route lambdas handle navigation because the ViewModel has no Activity.
             HomeEvent.OpenTroubleshoot -> Unit
             HomeEvent.OpenMiPay -> Unit
         }
     }
 
-    private suspend fun refresh() {
+    private suspend fun refresh(showSnapshotDetails: Boolean = false) {
         try {
-            mutableUiState.value = HomeUiState(homeState = homeStateLoader())
+            val homeState = homeStateLoader()
+            mutableUiState.value = mutableUiState.value.copy(
+                homeState = homeState,
+                snapshotDetails = if (showSnapshotDetails) {
+                    homeState
+                } else {
+                    mutableUiState.value.snapshotDetails
+                },
+            )
         } catch (e: Exception) {
             // Keep the last successful snapshot so a transient error does not blank the screen.
             emitError(UiText(R.string.error_load_home_failed))

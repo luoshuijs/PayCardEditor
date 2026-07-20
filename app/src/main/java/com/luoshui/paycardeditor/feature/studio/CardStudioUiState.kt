@@ -2,6 +2,7 @@ package com.luoshui.paycardeditor.feature.studio
 
 import com.luoshui.paycardeditor.data.CardAsset
 import com.luoshui.paycardeditor.model.CardSnapshot
+import com.luoshui.paycardeditor.ui.UiText
 
 /**
  * UI state projection for [CardStudioScreen].
@@ -73,4 +74,9 @@ sealed interface CardStudioEvent {
 
     data class ConfirmDeleteAsset(val asset: CardAsset) : CardStudioEvent
     data object DismissDeleteConfirm : CardStudioEvent
+}
+
+/** One-shot feedback emitted only after a Studio operation reaches its final result. */
+sealed interface CardStudioEffect {
+    data class ShowMessage(val message: UiText) : CardStudioEffect
 }

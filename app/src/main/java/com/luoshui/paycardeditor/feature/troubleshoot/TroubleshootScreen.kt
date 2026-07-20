@@ -41,6 +41,7 @@ import com.luoshui.paycardeditor.model.TroubleshootState
 import com.luoshui.paycardeditor.ui.EmptyErrorEvents
 import com.luoshui.paycardeditor.ui.UiText
 import com.luoshui.paycardeditor.ui.components.TonalCard
+import com.luoshui.paycardeditor.ui.components.UiErrorEffect
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -78,13 +79,7 @@ internal fun TroubleshootScreen(
             }
         }
     }
-    // Keep toast collection optional so Compose UI tests can render without a ViewModel.
-    LaunchedEffect(errorEvents) {
-        errorEvents.collect { uiText ->
-            val message = context.getString(uiText.resId, *uiText.args.toTypedArray())
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
-    }
+    UiErrorEffect(errorEvents)
 
     Scaffold(
         modifier = modifier,

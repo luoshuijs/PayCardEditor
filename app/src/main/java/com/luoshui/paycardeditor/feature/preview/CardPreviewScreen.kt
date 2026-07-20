@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +41,7 @@ import com.luoshui.paycardeditor.ui.UiText
 import com.luoshui.paycardeditor.ui.components.StatusTag
 import com.luoshui.paycardeditor.ui.components.StatusTagTone
 import com.luoshui.paycardeditor.ui.components.TonalCard
+import com.luoshui.paycardeditor.ui.components.UiErrorEffect
 import com.luoshui.paycardeditor.ui.components.WarningCard
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -62,19 +64,14 @@ internal fun CardPreviewScreen(
     effects: SharedFlow<CardPreviewEffect> = EmptyCardPreviewEffects,
 ) {
     val context = LocalContext.current
-    // Keep toast collection optional so Compose UI tests can render without a ViewModel.
-    LaunchedEffect(errorEvents) {
-        errorEvents.collect { uiText ->
-            val message = context.getString(uiText.resId, *uiText.args.toTypedArray())
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
-    }
+    val resources = LocalResources.current
+    UiErrorEffect(errorEvents)
     // Success feedback uses its own flow so restore failures emit only the error toast.
     LaunchedEffect(effects) {
         effects.collect { effect ->
             when (effect) {
                 is CardPreviewEffect.ShowMessage -> {
-                    val message = context.getString(
+                    val message = resources.getString(
                         effect.message.resId,
                         *effect.message.args.toTypedArray(),
                     )
@@ -82,6 +79,10 @@ internal fun CardPreviewScreen(
                 }
             }
         }
+    }
+    // A restored tab keeps its ViewModel, so reload cross-process state whenever the route re-enters composition.
+    LaunchedEffect(Unit) {
+        onEvent(CardPreviewEvent.Refresh)
     }
     Column(
         modifier = modifier

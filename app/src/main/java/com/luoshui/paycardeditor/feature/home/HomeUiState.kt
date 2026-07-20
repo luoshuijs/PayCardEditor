@@ -11,6 +11,7 @@ import com.luoshui.paycardeditor.model.HomeState
  */
 data class HomeUiState(
     val homeState: HomeState? = null,
+    val snapshotDetails: HomeState? = null,
 )
 
 /**
@@ -23,6 +24,7 @@ data class HomeUiState(
 sealed interface HomeEvent {
     data object SyncSnapshots : HomeEvent
     data object Refresh : HomeEvent
+    data object DismissSnapshotDetails : HomeEvent
     data object OpenTroubleshoot : HomeEvent
     data object OpenMiPay : HomeEvent
 }

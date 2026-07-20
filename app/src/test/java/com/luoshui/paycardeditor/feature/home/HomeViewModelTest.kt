@@ -115,6 +115,10 @@ class HomeViewModelTest {
         advanceUntilIdle()
         assertEquals(1, syncCalls)
         assertEquals(loadsAfterInit + 1, loadCalls)
+        assertEquals(vm.uiState.value.homeState, vm.uiState.value.snapshotDetails)
+
+        vm.handleEvent(HomeEvent.DismissSnapshotDetails)
+        assertEquals(null, vm.uiState.value.snapshotDetails)
     }
 
     @Test
