@@ -1,6 +1,5 @@
 package com.luoshui.paycardeditor.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,13 +18,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.dp
 
 /**
- * Render spec for one row. The container collects every spec before rendering so first, middle,
- * and last corner roles are assigned unambiguously.
+ * Render spec for one row.
  */
 internal data class SegmentedListItemSpec(
     val title: String,
@@ -38,22 +35,9 @@ internal data class SegmentedListItemSpec(
 )
 
 /**
- * DSL scope for rows that receive first, middle, and last roles from the container.
- *
- * Row builders synchronously append specs to [pending]. [SegmentedListContainer] reads that list
- * immediately after `content()` returns, then renders all rows in one pass. [pending] is cleared
- * before each container composition.
- *
- * Synchronous registration invariants:
- * - Call only `SegmentedListItem` or `SettingsXxxRow` extensions directly inside
- *   `SegmentedListContainer { ... }`.
- * - Do not defer spec registration to `LaunchedEffect`, `SideEffect`, or child coroutines.
- * - Do not nest another `SegmentedListContainer` inside this scope; use a normal list container
- *   outside this DSL when nesting is needed.
+ * DSL scope for rows rendered by [SegmentedListContainer].
  */
 class SegmentedListScope internal constructor() {
-    internal val pending: MutableList<SegmentedListItemSpec> = mutableListOf()
-
     @Composable
     fun SegmentedListItem(
         title: String,
@@ -64,7 +48,7 @@ class SegmentedListScope internal constructor() {
         enabled: Boolean = true,
         onClick: (() -> Unit)? = null,
     ) {
-        pending.add(
+        RenderSegmentedItem(
             SegmentedListItemSpec(
                 title = title,
                 summary = summary,
@@ -73,7 +57,7 @@ class SegmentedListScope internal constructor() {
                 enabled = enabled,
                 onClick = onClick,
                 modifier = modifier,
-            )
+            ),
         )
     }
 }
@@ -97,56 +81,61 @@ fun SegmentedListContainer(
     content: @Composable SegmentedListScope.() -> Unit,
 ) {
     val scope = remember { SegmentedListScope() }
-    scope.pending.clear()
-    scope.content()
-    val items = scope.pending.toList()
-
     val largeCorner = 24.dp
     val containerShape = RoundedCornerShape(largeCorner)
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(containerShape),
+        modifier = modifier.fillMaxWidth(),
+        shape = containerShape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Column {
-            items.forEachIndexed { index, spec ->
-                val isFirst = index == 0
-                val isLast = index == items.lastIndex
-                val itemShape: Shape = when {
-                    isFirst && isLast -> RoundedCornerShape(largeCorner)
-                    isFirst -> RoundedCornerShape(
-                        topStart = largeCorner,
-                        topEnd = largeCorner,
-                        bottomStart = 0.dp,
-                        bottomEnd = 0.dp,
-                    )
-                    isLast -> RoundedCornerShape(
-                        topStart = 0.dp,
-                        topEnd = 0.dp,
-                        bottomStart = largeCorner,
-                        bottomEnd = largeCorner,
-                    )
-                    else -> RoundedCornerShape(0.dp)
-                }
-                Box(
-                    modifier = Modifier
-                        .clip(itemShape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerLow),
-                ) {
-                    RenderSegmentedItem(spec)
-                }
-                if (!isLast) {
+        val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        SubcomposeLayout(Modifier.fillMaxWidth()) { constraints ->
+            val itemConstraints = constraints.copy(minHeight = 0)
+            val itemPlaceables = subcompose(SegmentedListSlot.Items) {
+                scope.content()
+            }.map { it.measure(itemConstraints) }
+            val width = (itemPlaceables.maxOfOrNull { it.width } ?: constraints.minWidth)
+                .coerceIn(constraints.minWidth, constraints.maxWidth)
+            val dividerPlaceables = subcompose(SegmentedListSlot.Dividers) {
+                repeat((itemPlaceables.size - 1).coerceAtLeast(0)) {
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        color = dividerColor,
                     )
+                }
+            }.map {
+                it.measure(
+                    constraints.copy(
+                        minWidth = width,
+                        maxWidth = width,
+                        minHeight = 0,
+                    ),
+                )
+            }
+            val contentHeight = itemPlaceables.sumOf { it.height } +
+                dividerPlaceables.sumOf { it.height }
+
+            val height = contentHeight.coerceIn(constraints.minHeight, constraints.maxHeight)
+            layout(width, height) {
+                var y = 0
+                itemPlaceables.forEachIndexed { index, item ->
+                    item.placeRelative(0, y)
+                    y += item.height
+                    dividerPlaceables.getOrNull(index)?.let { divider ->
+                        divider.placeRelative(0, y)
+                        y += divider.height
+                    }
                 }
             }
         }
     }
+}
+
+private enum class SegmentedListSlot {
+    Items,
+    Dividers,
 }
 
 @Composable

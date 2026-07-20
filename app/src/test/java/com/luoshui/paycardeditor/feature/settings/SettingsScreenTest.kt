@@ -1,5 +1,8 @@
 package com.luoshui.paycardeditor.feature.settings
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
@@ -67,7 +70,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `renders 主题模式 主色 高级设置 and crop rows`() {
+    fun `renders appearance and crop rows`() {
         rule.setContent {
             PayCardTheme {
                 SettingsScreen(
@@ -85,7 +88,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `clicking 主色 row fires OpenSeedColorPicker`() {
+    fun `clicking key color row fires OpenSeedColorPicker`() {
         val events = mutableListOf<SettingsEvent>()
         rule.setContent {
             PayCardTheme {
@@ -105,7 +108,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `clicking 高级设置 fires ToggleAdvanced`() {
+    fun `clicking advanced settings fires ToggleAdvanced`() {
         val events = mutableListOf<SettingsEvent>()
         rule.setContent {
             PayCardTheme {
@@ -125,6 +128,29 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun `clicking advanced settings expands advanced rows`() {
+        var state by mutableStateOf(defaultState())
+        rule.setContent {
+            PayCardTheme {
+                SettingsScreen(
+                    uiState = state,
+                    onEvent = { event ->
+                        if (event == SettingsEvent.ToggleAdvanced) {
+                            state = state.copy(advancedExpanded = !state.advancedExpanded)
+                        }
+                    },
+                    onBack = {},
+                )
+            }
+        }
+        rule.onNodeWithText("高级设置").invokeOnClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("调色板风格").assertExists()
+        rule.onNodeWithText("颜色规范").assertExists()
+        rule.onNodeWithText("收起高级").assertExists()
+    }
+
+    @Test
     fun `advanced expanded shows palette and spec rows`() {
         rule.setContent {
             PayCardTheme {
@@ -141,7 +167,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `clicking 裁剪比例 row fires OpenCropAspectDialog`() {
+    fun `clicking crop aspect row fires OpenCropAspectDialog`() {
         val events = mutableListOf<SettingsEvent>()
         rule.setContent {
             PayCardTheme {
@@ -161,7 +187,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `clicking 最大输出尺寸 row fires OpenCropSizeDialog`() {
+    fun `clicking maximum output size row fires OpenCropSizeDialog`() {
         val events = mutableListOf<SettingsEvent>()
         rule.setContent {
             PayCardTheme {
@@ -181,7 +207,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `key color summary shows 跟随系统 when argb is 0`() {
+    fun `key color summary shows system default when argb is zero`() {
         rule.setContent {
             PayCardTheme {
                 SettingsScreen(
